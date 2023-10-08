@@ -1,7 +1,7 @@
-﻿using FileSaverApi.Interfaces;
+﻿using FileSaver.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace FileSaverApi.DB.Models
+namespace FileSaver.Domain.Models
 {
     [Table("UnconfirmedUsers")]
     public class UnconfirmedUserDbModel : IEntity

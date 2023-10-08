@@ -1,4 +1,4 @@
-﻿namespace FileSaverApi.Models
+﻿namespace FileSaver.Domain.DTOs
 {
     public class UserDTORole
     {

@@ -1,8 +1,7 @@
-﻿using FileSaverApi.Interfaces;
-using System.ComponentModel.DataAnnotations;
+﻿using FileSaver.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace FileSaverApi.DB.Models
+namespace FileSaver.Domain.Models
 {
     [Table("Users")]
     public class UserDbModel : IEntity

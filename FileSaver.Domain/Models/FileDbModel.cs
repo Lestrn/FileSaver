@@ -1,12 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+using FileSaver.Domain.Interfaces;
 
 namespace FileSaver.Domain.Models
 {
-    internal class FileDbModel
+    [Table("Files")]
+    public class FileDbModel : IEntity
     {
+        public Guid Id { get; set; }
+        public string FileName { get; set; }
+        public string ContentType { get; set; }
+        public byte[] Content { get; set; }
+        [ForeignKey("UserDbModelId")]
+        [Required]
+        public Guid UserDbModelId { get; set; }
     }
 }

@@ -1,6 +1,5 @@
-﻿using Microsoft.Extensions.FileProviders;
-
-namespace FileSaverApi.Models
+﻿
+namespace FileSaver.Domain.DTOs
 {
     public class UserDTO
     {

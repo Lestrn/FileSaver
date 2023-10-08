@@ -1,6 +1,4 @@
-﻿using FileSaverApi.Enums;
-
-namespace FileSaverApi.Models
+﻿namespace FileSaver.Domain.DTOs
 {
     public class UserDTOEmailRole
     {

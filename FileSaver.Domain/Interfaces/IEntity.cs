@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace FileSaver.Domain.Interfaces
 {
-    internal class IEntity
+    public interface IEntity
     {
+        public Guid Id { get; set; }
     }
 }
