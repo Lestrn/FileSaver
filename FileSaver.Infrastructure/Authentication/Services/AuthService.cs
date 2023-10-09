@@ -20,17 +20,17 @@ namespace FileSaver.Infrastructure.Authentication.Services
     public class AuthService : IAuthService
     {
         private IConfiguration _config;
-        private IEntityRepository<UserDbModel> _userRepository;
-        private IEntityRepository<UnconfirmedUserDbModel> _unconfirmedUserRepository;
-        public AuthService(IConfiguration config, IEntityRepository<UserDbModel> entityRepository, IEntityRepository<UnconfirmedUserDbModel> unconfirmedUserRepository)
+        private IEntityRepository<User> _userRepository;
+        private IEntityRepository<PendingUser> _pendingUserRepository;
+        public AuthService(IConfiguration config, IEntityRepository<User> entityRepository, IEntityRepository<PendingUser> unconfirmedUserRepository)
         {
             _config = config;
             _userRepository = entityRepository;
-            _unconfirmedUserRepository = unconfirmedUserRepository;
+            _pendingUserRepository = unconfirmedUserRepository;
         }
         public async Task<JObject> LogIn(UserLoginDTO user)
         {  
-            UserDbModel? dbUser = (await _userRepository.WhereEnumerable(databaseUser => databaseUser.Email == databaseUser.Email && BCrypt.Net.BCrypt.EnhancedVerify(user.Password, databaseUser.Password))).FirstOrDefault();
+            User? dbUser = (await _userRepository.WhereEnumerable(databaseUser => databaseUser.Email == databaseUser.Email && BCrypt.Net.BCrypt.EnhancedVerify(user.Password, databaseUser.Password))).FirstOrDefault();
             if (dbUser is null) return JObject.FromObject(new {status = "Bad request", code = 404, message = "User was not found" });
             return await GenerateToken(dbUser);
         }
@@ -40,7 +40,7 @@ namespace FileSaver.Infrastructure.Authentication.Services
             {
                 return JObject.FromObject(new {status = "Bad request" , message = "Confirmation failed" });
             }
-            UserDbModel? dbUser = (await _userRepository.WhereQueryable(dbUser => dbUser.Email == email)).FirstOrDefault();
+            User? dbUser = (await _userRepository.WhereQueryable(dbUser => dbUser.Email == email)).FirstOrDefault();
             if (dbUser == null)
             {
                 return JObject.FromObject(new {status = "Bad request", code = 404, message = $"User with {email} email was not found" });
@@ -75,43 +75,41 @@ namespace FileSaver.Infrastructure.Authentication.Services
             }
             string passwordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(user.Password, 13);
             string codeHash = BCrypt.Net.BCrypt.EnhancedHashPassword(code, 13);
-            UnconfirmedUserDbModel? unconfirmedUserDb = (await _unconfirmedUserRepository.WhereQueryable(uncUser => uncUser.Email == user.Email)).FirstOrDefault();
+            PendingUser? unconfirmedUserDb = (await _pendingUserRepository.WhereQueryable(uncUser => uncUser.Email == user.Email)).FirstOrDefault();
             if (unconfirmedUserDb == null)
             {
-                unconfirmedUserDb = new UnconfirmedUserDbModel()
+                unconfirmedUserDb = new PendingUser()
                 {
                     Email = user.Email,
                     Password = passwordHash,
-                    Role = UserRoles.Basic.ToString(),
                     CorrectCode = codeHash,
                     Username = user.Username
                 };
-                await _unconfirmedUserRepository.AddAsync(unconfirmedUserDb);
-                await _unconfirmedUserRepository.SaveChangesAsync();
+                await _pendingUserRepository.AddAsync(unconfirmedUserDb);
+                await _pendingUserRepository.SaveChangesAsync();
                 var responseNewUser = new
                 {
                     status = "Ok", code = 200,
                     Id = unconfirmedUserDb.Id,
                     Email = unconfirmedUserDb.Email,
-                    Role = unconfirmedUserDb.Role
+                    
                 };
                 return JObject.FromObject(responseNewUser);
             }
             unconfirmedUserDb.CorrectCode = codeHash;
-            await _unconfirmedUserRepository.UpdateAsync(unconfirmedUserDb);
-            await _unconfirmedUserRepository.SaveChangesAsync();
+            await _pendingUserRepository.UpdateAsync(unconfirmedUserDb);
+            await _pendingUserRepository.SaveChangesAsync();
             var responseUserExists = new
             {
                 status = "Ok", code = 200,
                 Id = unconfirmedUserDb.Id,
                 Email = unconfirmedUserDb.Email,
-                Role = unconfirmedUserDb.Role
             };
             return JObject.FromObject(responseUserExists);
         }
         public async Task<bool> DeleteAccount(UserDTODelete user)
         {
-            UserDbModel userDb = await _userRepository.FindByIdWithIncludesAsync(user.Id, "Files");
+            User userDb = await _userRepository.FindByIdWithIncludesAsync(user.Id, "Files");
             if (userDb == null)
             {
                 return false;
@@ -122,7 +120,7 @@ namespace FileSaver.Infrastructure.Authentication.Services
         }
         public async Task<bool> ConfirmCode(string email, string userCode, bool addToDatabase = true)
         {
-            UnconfirmedUserDbModel? unconfirmedUserDbModel = (await _unconfirmedUserRepository.WhereQueryable(uncUser => uncUser.Email == email)).FirstOrDefault();
+            PendingUser? unconfirmedUserDbModel = (await _pendingUserRepository.WhereQueryable(uncUser => uncUser.Email == email)).FirstOrDefault();
             if (unconfirmedUserDbModel == null)
             {
                 return false;
@@ -133,23 +131,21 @@ namespace FileSaver.Infrastructure.Authentication.Services
             }
             if (addToDatabase)
             {
-                UserDbModel userDbModel = new UserDbModel()
+                User userDbModel = new User()
                 {
                     Email = unconfirmedUserDbModel.Email,
                     Password = unconfirmedUserDbModel.Password,
-                    Role = unconfirmedUserDbModel.Role,
-                    Image = unconfirmedUserDbModel.Image,
                     Username = unconfirmedUserDbModel.Username
                 };
                 await _userRepository.AddAsync(userDbModel);
             }
-            await _unconfirmedUserRepository.DeleteAsync(unconfirmedUserDbModel);
+            await _pendingUserRepository.DeleteAsync(unconfirmedUserDbModel);
             await _userRepository.SaveChangesAsync();
             return true;
         }
         public async Task<JObject> RecoverAccount(string email)
         {
-            UserDbModel? userDbModel = (await _userRepository.WhereQueryable(user => user.Email == email)).FirstOrDefault();
+            User? userDbModel = (await _userRepository.WhereQueryable(user => user.Email == email)).FirstOrDefault();
             if (userDbModel == null)
             {
                 return JObject.FromObject(new {status = "Bad request", code = 404, message = "User with this email wasnt found" });
@@ -163,20 +159,18 @@ namespace FileSaver.Infrastructure.Authentication.Services
                 return JObject.FromObject(new {status = "Bad request", code = 404, message = "Invalid Email" });
             }
             string codeHash = BCrypt.Net.BCrypt.EnhancedHashPassword(code, 13);
-            UnconfirmedUserDbModel? unconfirmedUserDbModel = (await _unconfirmedUserRepository.WhereQueryable(uncUser => uncUser.Email == email)).FirstOrDefault();
+            PendingUser? unconfirmedUserDbModel = (await _pendingUserRepository.WhereQueryable(uncUser => uncUser.Email == email)).FirstOrDefault();
             if (unconfirmedUserDbModel == null)
             {
-                unconfirmedUserDbModel = new UnconfirmedUserDbModel()
+                unconfirmedUserDbModel = new PendingUser()
                 {
                     Email = userDbModel.Email,
                     CorrectCode = codeHash,
-                    Image = userDbModel.Image,
                     Password = userDbModel.Password,
-                    Role = userDbModel.Role,
                     Username = userDbModel.Username
                 };
-                await _unconfirmedUserRepository.AddAsync(unconfirmedUserDbModel);
-                await _unconfirmedUserRepository.SaveChangesAsync();
+                await _pendingUserRepository.AddAsync(unconfirmedUserDbModel);
+                await _pendingUserRepository.SaveChangesAsync();
                 var responseAdded = new
                 {
                     status = "Ok",
@@ -186,8 +180,8 @@ namespace FileSaver.Infrastructure.Authentication.Services
                 return JObject.FromObject(responseAdded);
             }
             unconfirmedUserDbModel.CorrectCode = codeHash;
-            await _unconfirmedUserRepository.UpdateAsync(unconfirmedUserDbModel);
-            await _unconfirmedUserRepository.SaveChangesAsync();
+            await _pendingUserRepository.UpdateAsync(unconfirmedUserDbModel);
+            await _pendingUserRepository.SaveChangesAsync();
             var responseUpdated = new
             {
                 status = "Ok",
@@ -232,7 +226,7 @@ namespace FileSaver.Infrastructure.Authentication.Services
                 return Task.FromResult(false);
             }
         }
-        private Task<JObject> GenerateToken(UserDbModel dbUser)
+        private Task<JObject> GenerateToken(User dbUser)
         {
             var claims = new List<Claim> { new Claim(ClaimTypes.Name, dbUser.Email), new Claim(ClaimTypes.Role, dbUser.Role.ToString()) };
             AuthOptions authOptions = new AuthOptions(_config);

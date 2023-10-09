@@ -30,7 +30,7 @@ namespace FileSaver.API.Controllers
         [Route("[action]")]
         public async Task<IActionResult> DownloadFile(Guid fileId)
         {
-            FileDbModel file = await _userService.GetFileById(fileId);
+            Domain.Models.File file = await _userService.GetFileById(fileId);
             if (file != null)
             {
                 var contentDisposition = new System.Net.Mime.ContentDisposition

@@ -10,22 +10,22 @@ namespace FileSaver.Application.Services
 {
     public class UserService : IUserService
     {
-        private IEntityRepository<UserDbModel> _userRepository;
-        private IEntityRepository<FileDbModel> _fileRepository;
+        private IEntityRepository<User> _userRepository;
+        private IEntityRepository<Domain.Models.File> _fileRepository;
 
-        public UserService(IEntityRepository<UserDbModel> userRepository, IEntityRepository<FileDbModel> fileRepository)
+        public UserService(IEntityRepository<User> userRepository, IEntityRepository<Domain.Models.File> fileRepository)
         {
             _userRepository = userRepository;
             _fileRepository = fileRepository;
         }
         public async Task<bool> UpdateRole(Guid userId, UserRoles role)
         {
-            UserDbModel userDb = await _userRepository.FindByIdAsync(userId);
+            User userDb = await _userRepository.FindByIdAsync(userId);
             if (userDb == null)
             {
                 return false;
             }
-            userDb.Role = role.ToString();
+            userDb.Role = role;
             await _userRepository.UpdateAsync(userDb);
             await _userRepository.SaveChangesAsync();
 
@@ -38,7 +38,7 @@ namespace FileSaver.Application.Services
         }
         public async Task<bool> UploadFile(Guid userId, IFormFile file)
         {
-            UserDbModel? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, "Files");
+            User? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, "Files");
             if (dbUser == null)
             {
                 return false;
@@ -50,7 +50,7 @@ namespace FileSaver.Application.Services
             using (var stream = new MemoryStream())
             {
                 await file.CopyToAsync(stream);
-                FileDbModel fileDb = new FileDbModel()
+                Domain.Models.File fileDb = new Domain.Models.File()
                 {
                     FileName = file.FileName,
                     ContentType = file.ContentType,
@@ -64,13 +64,13 @@ namespace FileSaver.Application.Services
             return true;
         }
 
-        public async Task<FileDbModel?> GetFileById(Guid fileId)
+        public async Task<Domain.Models.File?> GetFileById(Guid fileId)
         {
             return await _fileRepository.FindByIdAsync(fileId);
         }
         public async Task<List<FileDTO>> GetAllFilesByUserId(Guid userId)
         {
-            List<FileDbModel> userDbFiles = (await _userRepository.FindByIdWithIncludesAsync(userId, "Files")).Files;
+            List<Domain.Models.File> userDbFiles = (await _userRepository.FindByIdWithIncludesAsync(userId, "Files")).Files;
             List<FileDTO> userFiles = new List<FileDTO>(userDbFiles.Count);
             foreach (var file in userDbFiles)
             {
@@ -80,7 +80,7 @@ namespace FileSaver.Application.Services
         }
         public async Task<bool> DeleteFile(Guid fileId)
         {
-            FileDbModel fileDb = await _fileRepository.FindByIdAsync(fileId);
+            Domain.Models.File fileDb = await _fileRepository.FindByIdAsync(fileId);
             if (fileDb == null)
             {
                 return false;
@@ -96,7 +96,7 @@ namespace FileSaver.Application.Services
                 return (false, "Invalid file");
             }
 
-            UserDbModel userDbModel = await _userRepository.FindByIdAsync(userId);
+            User userDbModel = await _userRepository.FindByIdAsync(userId);
             if (userDbModel == null)
             {
                 return (false, "Invalid user id");
@@ -125,7 +125,7 @@ namespace FileSaver.Application.Services
         }
         public async Task<(bool isChanged, string message)> ChangePassword(Guid userId, string newPassoword)
         {
-            UserDbModel? userDbModel = await _userRepository.FindByIdAsync(userId);
+            User? userDbModel = await _userRepository.FindByIdAsync(userId);
             if (userDbModel == null)
             {
                 return (false, "User with such id was not found");
