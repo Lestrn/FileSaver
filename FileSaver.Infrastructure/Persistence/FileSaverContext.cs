@@ -15,9 +15,9 @@ namespace FileSaver.Infrastructure.Persistence
         {
             Database.EnsureCreated();
         }
-        public DbSet<User> User { get; set; }
-        public DbSet<SavedFile> File { get; set; }
-        public DbSet<PendingUser> PendingUser { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<SavedFile> Files { get; set; }
+        public DbSet<PendingUser> PendingUsers { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Friendship> Friendships { get; set; }
         public DbSet<SharedFile> SharedFiles { get; set; }

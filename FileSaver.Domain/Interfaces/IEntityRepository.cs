@@ -9,16 +9,15 @@ namespace FileSaver.Domain.Interfaces
     public interface IEntityRepository<TEntity>
     {
         public Task<List<TEntity>> GetAllAsync();
-        public Task AddAsync(TEntity entity);
-        public Task DeleteAsync(TEntity entity);
+        public bool AddAsync(TEntity entity);
+        public bool DeleteAsync(TEntity entity);
         public Task UpdateAsync(TEntity entity);
         public Task SaveChangesAsync();
         public Task<TEntity?> FindByIdAsync(Guid id);
         public Task<TEntity?> FindByIdWithIncludesAsync(Guid id, params string[] includeNames);
-        public Task<IQueryable<TEntity>> WhereQueryable(System.Linq.Expressions.Expression<Func<TEntity, bool>> predicate);
-        public Task<IEnumerable<TEntity>> WhereEnumerable(Func<TEntity, bool> predicate);
+        public Task<IEnumerable<TEntity>> Where(Func<TEntity, bool> predicate);
         public Task<IQueryable<TResult>> Select<TResult>(System.Linq.Expressions.Expression<Func<TEntity, TResult>> selector);
-        public Task<List<TEntity>> GetAllAsyncWithIncludes(params string[] includeNames);
+        public Task<List<TEntity>> GetAllAsyncWithIncludesAsync(params string[] includeNames);
         public Task<bool> Any(Func<TEntity, bool> predicate);
     }
 }

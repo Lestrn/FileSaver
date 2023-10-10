@@ -82,7 +82,7 @@ namespace FileSaver.Application.Services
             {
                 userFiles.Add(new FileDTO() { ContentType = file.ContentType, FileName = file.FileName, Id = file.Id });
             }
-            List<SavedFile> receivedFiles = (await _sharedFileRepository.WhereQueryable(sf => sf.SharedWithUserId == userId)).Select(sf => sf.File).ToList();
+            List<SavedFile> receivedFiles = (await _sharedFileRepository.Where(sf => sf.SharedWithUserId == userId)).Select(sf => sf.File).ToList();
             foreach (var file in receivedFiles)
             {
                 userFiles.Add(new FileDTO() { ContentType = file.ContentType, FileName = file.FileName, Id = file.Id });
@@ -96,7 +96,7 @@ namespace FileSaver.Application.Services
             {
                 return false;
             }
-            await _fileRepository.DeleteAsync(fileDb);
+            _fileRepository.DeleteAsync(fileDb);
             await _fileRepository.SaveChangesAsync();
             return true;
         }
@@ -158,7 +158,7 @@ namespace FileSaver.Application.Services
             {
                 return false;
             }
-            await _userRepository.DeleteAsync(userDb);
+             _userRepository.DeleteAsync(userDb);
             await _userRepository.SaveChangesAsync();
             return true;
         }

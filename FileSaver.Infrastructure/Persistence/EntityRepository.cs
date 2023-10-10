@@ -11,61 +11,73 @@ namespace FileSaver.Infrastructure.Persistence
 {
     public class EntityRepository<TEntity> : IEntityRepository<TEntity> where TEntity : class, IEntity
     {
-        private readonly DbSet<TEntity> _entity;
+        private readonly DbSet<TEntity> _dbSet;
 
         private readonly FileSaverContext _context;
 
         public EntityRepository(FileSaverContext dbContext)
         {
             _context = dbContext;
-            _entity = _context.Set<TEntity>();
+            _dbSet = _context.Set<TEntity>();
         }
-        public Task AddAsync(TEntity entity)
+        public bool AddAsync(TEntity entity)
         {
+            if(entity == null)
+            {
+                return false;
+            }
             _context.Add(entity);
-            return Task.CompletedTask;
+            return true;
+           
         }
 
-        public Task DeleteAsync(TEntity entity)
+        public bool DeleteAsync(TEntity entity)
         {
+            if (entity == null)
+            {
+                return false;
+            }
             _context.Remove(entity);
-            return Task.CompletedTask;
+            return true;
         }
 
         public Task<TEntity?> FindByIdAsync(Guid id)
         {
-            return _entity.FirstOrDefaultAsync(entity => entity.Id == id);
+            return _dbSet.FirstOrDefaultAsync(entity => entity.Id == id);
         }
 
         public Task<List<TEntity>> GetAllAsync()
         {
-            return _entity.ToListAsync();
+            return _dbSet.ToListAsync();
         }
-        public Task<List<TEntity>> GetAllAsyncWithIncludes(params string[] includeNames)
+        public Task<List<TEntity>> GetAllAsyncWithIncludesAsync(params string[] includeNames)
         {
-            IQueryable<TEntity> query = _entity;
-            foreach (var includeName in includeNames)
+            IQueryable<TEntity> query = _dbSet;
+            try
             {
-                query = query.Include(includeName);
+                foreach (var includeName in includeNames)
+                {
+                    query = query.Include(includeName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
             return query.ToListAsync();
 
         }
-        public Task<IQueryable<TEntity>> WhereQueryable(System.Linq.Expressions.Expression<Func<TEntity, bool>> predicate)
+        public Task<IEnumerable<TEntity>> Where(Func<TEntity, bool> predicate)
         {
-            return Task.FromResult(_entity.Where(predicate));
-        }
-        public Task<IEnumerable<TEntity>> WhereEnumerable(Func<TEntity, bool> predicate)
-        {
-            return Task.FromResult(_entity.Where(predicate));  
+            return Task.FromResult(_dbSet.Where(predicate));  
         }
         public Task<IQueryable<TResult>> Select<TResult>(System.Linq.Expressions.Expression<Func<TEntity,TResult>> selector)
         {
-            return Task.FromResult(_entity.Select(selector));
+            return Task.FromResult(_dbSet.Select(selector));
         }
         public Task<bool> Any(Func<TEntity, bool> predicate)
         {
-            return Task.FromResult(_entity.Any(predicate));
+            return Task.FromResult(_dbSet.Any(predicate));
         }
         public Task SaveChangesAsync()
         {
@@ -74,7 +86,7 @@ namespace FileSaver.Infrastructure.Persistence
 
         public Task UpdateAsync(TEntity entity)
         {
-            _entity.Update(entity);
+            _dbSet.Update(entity);
             return Task.CompletedTask;
         }
         public Task<TEntity?> FindByIdWithIncludesAsync(Guid id, params string[] includeNames)
@@ -84,7 +96,7 @@ namespace FileSaver.Infrastructure.Persistence
                 throw new ArgumentNullException("Include names can't be null");
             }
 
-            IQueryable<TEntity> query = _entity;
+            IQueryable<TEntity> query = _dbSet;
             foreach (var includeName in includeNames)
             {
                 query = query.Include(includeName);
