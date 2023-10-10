@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace FileSaver.Domain.Models
 {
-    [Table("SharedFiles")]
     public class SharedFile : IEntity
     {
         public Guid Id { get; set; }

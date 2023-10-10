@@ -4,7 +4,6 @@ using FileSaver.Domain.Interfaces;
 
 namespace FileSaver.Domain.Models
 {
-    [Table("Files")]
     public class SavedFile : IEntity
     {
         public Guid Id { get; set; }

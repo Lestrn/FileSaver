@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FileSaver.Domain.Models
 {
-    [Table("PendingUsers")]
     public class PendingUser : IEntity
     {
         public Guid Id { get; set; }

@@ -10,10 +10,8 @@ using System.Threading.Tasks;
 
 namespace FileSaver.Domain.Models
 {
-    [Table("Friendship")]
     public class Friendship : IEntity
     {
-        [Key]
         public Guid Id { get; set; }
         public Guid UserID1 { get; set; }
         public Guid UserID2 { get; set; }

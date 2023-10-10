@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FileSaver.Domain.Models
 {
-    [Table("Users")]
     public class User : IEntity
     {
         public Guid Id { get; set; }
