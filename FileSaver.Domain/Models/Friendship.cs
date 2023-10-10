@@ -1,4 +1,5 @@
 ﻿using FileSaver.Domain.Enums;
+using FileSaver.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -10,10 +11,10 @@ using System.Threading.Tasks;
 namespace FileSaver.Domain.Models
 {
     [Table("Friendship")]
-    public class Friendship
+    public class Friendship : IEntity
     {
         [Key]
-        public Guid FriendshipID { get; set; }
+        public Guid Id { get; set; }
         public Guid UserID1 { get; set; }
         public Guid UserID2 { get; set; }
         public FriendshipStatus Status { get; set; }

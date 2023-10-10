@@ -13,7 +13,8 @@ namespace FileSaver.Domain.Models
         public string Password { get; set; }
         public UserRoles Role { get; set; }
         public byte[]? Image { get; set; }
-        public List<File> Files { get; set; }
+        public List<SavedFile>? Files { get; set; }
+        public List<SharedFile>? SharedFiles { get; set; }
         public virtual ICollection<Message> SentMessages { get; set; }
         public virtual ICollection<Message> ReceivedMessages { get; set; }
         public virtual ICollection<Friendship> Friendships { get; set; }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FileSaver.Domain.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -8,9 +9,9 @@ using System.Threading.Tasks;
 namespace FileSaver.Domain.Models
 {
     [Table("Messages")]
-    public class Message
+    public class Message : IEntity
     {
-        public Guid MessageID { get; set; }
+        public Guid Id { get; set; }
         public Guid SenderUserID { get; set; }
         public Guid ReceiverUserID { get; set; }
         public string Content { get; set; }

@@ -30,7 +30,7 @@ namespace FileSaver.Infrastructure.Authentication.Services
         }
         public async Task<JObject> LogIn(UserLoginDTO user)
         {  
-            User? dbUser = (await _userRepository.WhereEnumerable(databaseUser => databaseUser.Email == databaseUser.Email && BCrypt.Net.BCrypt.EnhancedVerify(user.Password, databaseUser.Password))).FirstOrDefault();
+            User? dbUser = (await _userRepository.WhereEnumerable(databaseUser => databaseUser.Email == user.Email && BCrypt.Net.BCrypt.EnhancedVerify(user.Password, databaseUser.Password))).FirstOrDefault();
             if (dbUser is null) return JObject.FromObject(new {status = "Bad request", code = 404, message = "User was not found" });
             return await GenerateToken(dbUser);
         }
@@ -107,17 +107,7 @@ namespace FileSaver.Infrastructure.Authentication.Services
             };
             return JObject.FromObject(responseUserExists);
         }
-        public async Task<bool> DeleteAccount(UserDTODelete user)
-        {
-            User userDb = await _userRepository.FindByIdWithIncludesAsync(user.Id, "Files");
-            if (userDb == null)
-            {
-                return false;
-            }
-            await _userRepository.DeleteAsync(userDb);
-            await _userRepository.SaveChangesAsync();
-            return true;
-        }
+
         public async Task<bool> ConfirmCode(string email, string userCode, bool addToDatabase = true)
         {
             PendingUser? unconfirmedUserDbModel = (await _pendingUserRepository.WhereQueryable(uncUser => uncUser.Email == email)).FirstOrDefault();
@@ -198,14 +188,6 @@ namespace FileSaver.Infrastructure.Authentication.Services
                 Credentials = new NetworkCredential(_config["EmailSettings:Email"], _config["EmailSettings:Password"]),
                 EnableSsl = true,
             };
-            Random rand = new Random();
-            int[] numbers = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int i = 0; i < 7; i++)
-            {
-                stringBuilder.Append(numbers[rand.Next(0, numbers.Length)]);
-            }
-
             MailMessage mailMessage = new MailMessage
             {
                 From = new MailAddress(_config["EmailSettings:Email"]),

@@ -40,18 +40,6 @@ namespace FileSaver.API.Controllers
             }
             return Ok();
         }
-        [HttpDelete]
-        [Route("[action]")]
-        [Authorize]
-        public async Task<IActionResult> DeleteAccount(UserDTODelete user)
-        {
-            bool isDeleted = await _authService.DeleteAccount(user);
-            if (!isDeleted)
-            {
-                return BadRequest();
-            }
-            return Ok();
-        }
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> RecoverAccount(string email)

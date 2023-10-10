@@ -30,7 +30,7 @@ namespace FileSaver.API.Controllers
         [Route("[action]")]
         public async Task<IActionResult> DownloadFile(Guid fileId)
         {
-            Domain.Models.File file = await _userService.GetFileById(fileId);
+            Domain.Models.SavedFile file = await _userService.GetFileById(fileId);
             if (file != null)
             {
                 var contentDisposition = new System.Net.Mime.ContentDisposition
@@ -105,5 +105,27 @@ namespace FileSaver.API.Controllers
             }
             return Ok();
         }
+        [HttpDelete]
+        [Route("[action]")]
+        public async Task<IActionResult> DeleteAccount(UserDTODelete user)
+        {
+            bool isDeleted = await _userService.DeleteAccount(user);
+            if (!isDeleted)
+            {
+                return BadRequest();
+            }
+            return Ok();
+        }
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> ShareFile(UserFileShareDTO share)
+        {
+            bool isShared = await _userService.ShareFile(share);
+            if (!isShared)
+            {
+                return BadRequest();
+            }
+            return Ok();
+        } 
     }
 }
