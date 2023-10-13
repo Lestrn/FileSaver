@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using FileSaver.Infrastructure.Authentication.Services;
+using FileSaver.Domain.Models.Mapping;
 
 namespace FileSaver.API
 {
@@ -72,6 +73,7 @@ namespace FileSaver.API
                 });
             });
             builder.Services.AddControllersWithViews();
+            builder.Services.AddAutoMapper(typeof(Program).Assembly, typeof(MappingProfile).Assembly);
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

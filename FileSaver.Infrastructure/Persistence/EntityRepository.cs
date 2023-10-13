@@ -71,7 +71,7 @@ namespace FileSaver.Infrastructure.Persistence
         {
             return Task.FromResult(_dbSet.Where(predicate));  
         }
-        public Task<IQueryable<TResult>> Select<TResult>(System.Linq.Expressions.Expression<Func<TEntity,TResult>> selector)
+        public Task<IQueryable<TResult>> Select<TResult>(System.Linq.Expressions.Expression<Func<TEntity, TResult>> selector)
         {
             return Task.FromResult(_dbSet.Select(selector));
         }
@@ -97,11 +97,17 @@ namespace FileSaver.Infrastructure.Persistence
             }
 
             IQueryable<TEntity> query = _dbSet;
-            foreach (var includeName in includeNames)
+            try
             {
-                query = query.Include(includeName);
+                foreach (var includeName in includeNames)
+                {
+                    query = query.Include(includeName);
+                }
             }
-
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
             return query.FirstOrDefaultAsync(entity => entity.Id == id);
         }
     }

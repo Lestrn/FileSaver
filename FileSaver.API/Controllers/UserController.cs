@@ -2,6 +2,7 @@
 using FileSaver.Domain.DTOs;
 using FileSaver.Domain.Enums;
 using FileSaver.Domain.Models;
+using FileSaver.Domain.Models.Mapping.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -30,7 +31,7 @@ namespace FileSaver.API.Controllers
         [Route("[action]")]
         public async Task<IActionResult> DownloadFile(Guid fileId)
         {
-            Domain.Models.SavedFile file = await _userService.GetFileById(fileId);
+            SavedFile file = await _userService.GetFileById(fileId);
             if (file != null)
             {
                 var contentDisposition = new System.Net.Mime.ContentDisposition
@@ -67,14 +68,14 @@ namespace FileSaver.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<JsonResult> GetAllUsers()
         {
-            List<UserDTOEmailRole> userDTOEmailRole = await _userService.GetAllUsers();
+            List<UserModelEmailRole> userDTOEmailRole = await _userService.GetAllUsers();
             return new JsonResult(userDTOEmailRole);
         }
         [HttpGet]
         [Route("[action]")]
         public async Task<JsonResult> GetAllFilesByUserId(Guid userId)
         {
-            List<FileDTO> fileDbModels = await _userService.GetAllFilesByUserId(userId);
+            List<SavedFileModel> fileDbModels = await _userService.GetAllFilesByUserId(userId);
             return new JsonResult(fileDbModels);
         }
         [HttpDelete]

@@ -7,20 +7,24 @@ using Microsoft.AspNetCore.Http;
 using FileSaver.Domain.Resources;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
+using AutoMapper;
+using FileSaver.Domain.Models.Mapping.Models;
 
 namespace FileSaver.Application.Services
 {
     public class UserService : IUserService
     {
+        private const string FILESCOLUMN = "Files";
         private IEntityRepository<User> _userRepository;
         private IEntityRepository<SavedFile> _fileRepository;
         private IEntityRepository<SharedFile> _sharedFileRepository;
-
-        public UserService(IEntityRepository<User> userRepository, IEntityRepository<SavedFile> fileRepository, IEntityRepository<SharedFile> sharedFileRepositor)
+        private IMapper _mapper;
+        public UserService(IEntityRepository<User> userRepository, IEntityRepository<SavedFile> fileRepository, IEntityRepository<SharedFile> sharedFileRepositor, IMapper mapper)
         {
             _userRepository = userRepository;
             _fileRepository = fileRepository;
             _sharedFileRepository = sharedFileRepositor;
+            _mapper = mapper;
         }
         public async Task<bool> UpdateRole(Guid userId, UserRoles role)
         {
@@ -35,14 +39,16 @@ namespace FileSaver.Application.Services
 
             return true;
         }
-        public async Task<List<UserDTOEmailRole>> GetAllUsers()
+        public async Task<List<UserModelEmailRole>> GetAllUsers()
         {
-            List<UserDTOEmailRole> userDTOEmailRoles = (await _userRepository.Select(userDb => new UserDTOEmailRole() { Id = userDb.Id, Email = userDb.Email, Role = userDb.Role })).ToList();
-            return userDTOEmailRoles;
+            List<User> users = await _userRepository.GetAllAsync();
+            List<UserModelEmailRole> userModel = new List<UserModelEmailRole>(users.Count);
+            users.ForEach(user => userModel.Add(_mapper.Map<UserModelEmailRole>(user)));
+            return userModel;
         }
         public async Task<bool> UploadFile(Guid userId, IFormFile file)
         {
-            User? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, "Files");
+            User? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, FILESCOLUMN);
             if (dbUser == null)
             {
                 return false;
@@ -72,20 +78,20 @@ namespace FileSaver.Application.Services
         {
             return await _fileRepository.FindByIdAsync(fileId);
         }
-        public async Task<List<FileDTO>> GetAllFilesByUserId(Guid userId)
+        public async Task<List<SavedFileModel>> GetAllFilesByUserId(Guid userId)
         {
 
-            User userDb = (await _userRepository.FindByIdWithIncludesAsync(userId, "Files"));
+            User userDb = await _userRepository.FindByIdWithIncludesAsync(userId, FILESCOLUMN);
             List<SavedFile> userDbFiles = userDb.Files;
-            List<FileDTO> userFiles = new List<FileDTO>(userDbFiles.Count);
+            List<SavedFileModel> userFiles = new List<SavedFileModel>(userDbFiles.Count);
             foreach (var file in userDbFiles)
-            {
-                userFiles.Add(new FileDTO() { ContentType = file.ContentType, FileName = file.FileName, Id = file.Id });
+            {             
+                userFiles.Add(_mapper.Map<SavedFileModel>(file));
             }
             List<SavedFile> receivedFiles = (await _sharedFileRepository.Where(sf => sf.SharedWithUserId == userId)).Select(sf => sf.File).ToList();
             foreach (var file in receivedFiles)
             {
-                userFiles.Add(new FileDTO() { ContentType = file.ContentType, FileName = file.FileName, Id = file.Id });
+                userFiles.Add(_mapper.Map<SavedFileModel>(file));
             }
             return userFiles;
         }
