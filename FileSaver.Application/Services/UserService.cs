@@ -9,6 +9,8 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 using AutoMapper;
 using FileSaver.Domain.Models.Mapping.Models;
+using static System.Net.Mime.MediaTypeNames;
+using System.IO;
 
 namespace FileSaver.Application.Services
 {
@@ -47,34 +49,6 @@ namespace FileSaver.Application.Services
             users.ForEach(user => userModel.Add(_mapper.Map<UserModelEmailRole>(user)));
             return userModel;
         }
-        public async Task<bool> UploadFile(Guid userId, IFormFile file)
-        {
-            User? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, FILESCOLUMN);
-            if (dbUser == null)
-            {
-                return false;
-            }
-            if (file == null || file.Length == 0)
-            {
-                return false;
-            }
-            using (var stream = new MemoryStream())
-            {
-                await file.CopyToAsync(stream);
-                Domain.Models.SavedFile fileDb = new SavedFile()
-                {
-                    FileName = file.FileName,
-                    ContentType = file.ContentType,
-                    Content = stream.ToArray()
-                };
-
-                dbUser.Files.Add(fileDb);
-                await _userRepository.UpdateAsync(dbUser);
-                await _userRepository.SaveChangesAsync();
-            }
-            return true;
-        }
-
         public async Task<SavedFile?> GetFileById(Guid fileId)
         {
             return await _fileRepository.FindByIdAsync(fileId);
@@ -107,39 +81,23 @@ namespace FileSaver.Application.Services
             await _fileRepository.SaveChangesAsync();
             return true;
         }
+        public async Task<bool> UploadFile(Guid userId, IFormFile file)
+        {
+            var res = await UploadFileGeneral(userId, file);
+            return res.isUploaded;
+        }
         public async Task<(bool isUploaded, string errorMsg)> UploadAvatar(Guid userId, IFormFile image)
         {
             if (image == null || image.Length == 0)
             {
                 return (false, "Invalid file");
-            }
-
-            User? userDbModel = await _userRepository.FindByIdAsync(userId);
-            if (userDbModel == null)
-            {
-                return (false, "Invalid user id");
-            }
+            }        
             if (!IsImage(image.ContentType))
             {
                 return (false, "Only image files are allowed.");
             }
-            try
-            {
-                using (var memoryStream = new MemoryStream())
-                {
-                    await image.CopyToAsync(memoryStream);
-                    byte[] imageBytes = memoryStream.ToArray();
-                    userDbModel.Image = imageBytes;
-                    await _userRepository.UpdateAsync(userDbModel);
-                    await _userRepository.SaveChangesAsync();
-                    return (true, string.Empty);
-                }
-            }
-            catch (Exception ex)
-            {
-                return (true, $"Internal server error: {ex}");
-            }
-
+            var res = await UploadFileGeneral(userId, image,  true);
+            return(res.isUploaded, res.errorMsg);
         }
         public async Task<(bool isChanged, string message)> ChangePassword(Guid userId, string newPassoword)
         {
@@ -196,6 +154,41 @@ namespace FileSaver.Application.Services
         {
             string[] allowedContentTypes = { "image/jpeg", "image/png", "image/bmp" };
             return allowedContentTypes.Contains(contentType);
+        }
+        private async Task<(bool isUploaded, string errorMsg)> UploadFileGeneral(Guid userId, IFormFile file, bool isAvatar = false)
+        {
+            User? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, FILESCOLUMN);
+            if (dbUser == null)
+            {
+                return (false, "User with such id was not found");
+            }
+            if (file == null || file.Length == 0)
+            {
+                return (false, "File was empty or null");
+            }
+            using (var stream = new MemoryStream())
+            {
+                await file.CopyToAsync(stream);
+                Domain.Models.SavedFile fileDb = new SavedFile()
+                {
+                    FileName = file.FileName,
+                    ContentType = file.ContentType,
+                    Content = stream.ToArray()
+                };
+                if (!isAvatar)
+                {
+                    dbUser.Files.Add(fileDb);
+                }
+                else
+                {
+                    await file.CopyToAsync(stream);
+                    byte[] imageBytes = stream.ToArray();
+                    dbUser.Image = imageBytes;
+                }
+                await _userRepository.UpdateAsync(dbUser);
+                await _userRepository.SaveChangesAsync();
+            }
+            return (true, string.Empty);
         }
     }
 }
