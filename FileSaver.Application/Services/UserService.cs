@@ -15,6 +15,7 @@ namespace FileSaver.Application.Services
     public class UserService : IUserService
     {
         private const string FILESCOLUMN = "Files";
+        private const string SHAREDFILESCOLUMN = "SharedFiles";
         private IEntityRepository<User> _userRepository;
         private IEntityRepository<SavedFile> _fileRepository;
         private IEntityRepository<SharedFile> _sharedFileRepository;
@@ -159,7 +160,7 @@ namespace FileSaver.Application.Services
         }
         public async Task<bool> DeleteAccount(UserDTODelete user)
         {
-            User? userDb = await _userRepository.FindByIdWithIncludesAsync(user.Id, "Files");
+            User? userDb = await _userRepository.FindByIdWithIncludesAsync(user.Id, FILESCOLUMN);
             if (userDb == null)
             {
                 return false;
@@ -170,7 +171,7 @@ namespace FileSaver.Application.Services
         }
         public async Task<bool> ShareFile(UserFileShareDTO userShare)
         {
-            User? fileOwnerDb = await _userRepository.FindByIdWithIncludesAsync(userShare.OwnerId, "Files", "SharedFiles");
+            User? fileOwnerDb = await _userRepository.FindByIdWithIncludesAsync(userShare.OwnerId, FILESCOLUMN, SHAREDFILESCOLUMN);
             if (fileOwnerDb == null)
             {
                 return false;
