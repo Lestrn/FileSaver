@@ -16,8 +16,6 @@ namespace FileSaver.Application.Services
 {
     public class UserService : IUserService
     {
-        private const string FILESCOLUMN = "Files";
-        private const string SHAREDFILESCOLUMN = "SharedFiles";
         private IEntityRepository<User> _userRepository;
         private IEntityRepository<SavedFile> _fileRepository;
         private IEntityRepository<SharedFile> _sharedFileRepository;
@@ -56,7 +54,7 @@ namespace FileSaver.Application.Services
         public async Task<List<SavedFileModel>> GetAllFilesByUserId(Guid userId)
         {
 
-            User userDb = await _userRepository.FindByIdWithIncludesAsync(userId, FILESCOLUMN);
+            User userDb = await _userRepository.FindByIdWithIncludesAsync(userId, UserProperties.Files.ToString());
             List<SavedFile> userDbFiles = userDb.Files;
             List<SavedFileModel> userFiles = new List<SavedFileModel>(userDbFiles.Count);
             foreach (var file in userDbFiles)
@@ -118,7 +116,7 @@ namespace FileSaver.Application.Services
         }
         public async Task<bool> DeleteAccount(UserDTODelete user)
         {
-            User? userDb = await _userRepository.FindByIdWithIncludesAsync(user.Id, FILESCOLUMN);
+            User? userDb = await _userRepository.FindByIdWithIncludesAsync(user.Id);
             if (userDb == null)
             {
                 return false;
@@ -129,7 +127,7 @@ namespace FileSaver.Application.Services
         }
         public async Task<bool> ShareFile(UserFileShareDTO userShare)
         {
-            User? fileOwnerDb = await _userRepository.FindByIdWithIncludesAsync(userShare.OwnerId, FILESCOLUMN, SHAREDFILESCOLUMN);
+            User? fileOwnerDb = await _userRepository.FindByIdWithIncludesAsync(userShare.OwnerId, UserProperties.Files.ToString(), UserProperties.SharedFiles.ToString());
             if (fileOwnerDb == null)
             {
                 return false;
@@ -157,7 +155,7 @@ namespace FileSaver.Application.Services
         }
         private async Task<(bool isUploaded, string errorMsg)> UploadFileGeneral(Guid userId, IFormFile file, bool isAvatar = false)
         {
-            User? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, FILESCOLUMN);
+            User? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, UserProperties.Files.ToString());
             if (dbUser == null)
             {
                 return (false, "User with such id was not found");
