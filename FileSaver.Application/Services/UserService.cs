@@ -203,7 +203,7 @@ namespace FileSaver.Application.Services
             return (true, string.Empty);
         } 
 
-        public async Task<(bool accepted, string errorMsg)> AcceptFriendRequest(Guid receiverId, Guid senderId)
+        public async Task<(bool accepted, string errorMsg)> AcceptFriendRequest(Guid senderId, Guid receiverId)
         {
             Friendship? friendship = (await _friendshipRepository.Where(fs => fs.ReceiverUserID == receiverId && fs.SenderUserID == senderId)).FirstOrDefault();
             if (friendship == null)
