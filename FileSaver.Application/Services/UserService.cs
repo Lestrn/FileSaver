@@ -99,7 +99,7 @@ namespace FileSaver.Application.Services
         }
         public async Task<bool> DeleteAccount(UserDTODelete user)
         {
-            User? userDb = await _userRepository.FindByIdWithIncludesAsync(user.Id);
+            User? userDb = await _userRepository.FindByIdAsync(user.Id);
             if (userDb == null)
             {
                 return false;
@@ -132,22 +132,42 @@ namespace FileSaver.Application.Services
 
         public async Task<bool> UploadFile(Guid userId, IFormFile file)
         {
-            var res = await UploadFileGeneral(userId, file);
-            return res.isUploaded;
+            User? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, UserProperties.Files.ToString());
+            if (dbUser == null || dbUser.Files == null)
+            {
+                return false;
+            }
+            var res = await GetFile(file);
+            if (res.file == null)
+            {
+                return false;
+            }
+            dbUser.Files.Add(res.file);
+            await _userRepository.UpdateAsync(dbUser);
+            await _userRepository.SaveChangesAsync();
+            return true;
         }
 
         public async Task<(bool isUploaded, string errorMsg)> UploadAvatar(Guid userId, IFormFile image)
         {
-            if (image == null || image.Length == 0)
-            {
-                return (false, "Invalid file");
-            }
             if (!IsImage(image.ContentType))
             {
                 return (false, "Only image files are allowed.");
             }
-            var res = await UploadFileGeneral(userId, image, true);
-            return (res.isUploaded, res.errorMsg);
+            User? dbUser = await _userRepository.FindByIdAsync(userId);
+            if (dbUser == null)
+            {
+                return (false, "User with such id was not found");
+            }
+            var res = await GetFile(image);
+            if(res.file == null)
+            {
+                return (false, res.errorMsg);
+            }
+            dbUser.Image = res.file.Content;
+            await _userRepository.UpdateAsync(dbUser);
+            await _userRepository.SaveChangesAsync();
+            return (true, string.Empty);
         }
 
         private bool IsImage(string contentType)
@@ -155,40 +175,24 @@ namespace FileSaver.Application.Services
             string[] allowedContentTypes = { "image/jpeg", "image/png", "image/bmp" };
             return allowedContentTypes.Contains(contentType);
         }
-        private async Task<(bool isUploaded, string errorMsg)> UploadFileGeneral(Guid userId, IFormFile file, bool isAvatar = false)
+        private async Task<(SavedFile? file, string errorMsg)> GetFile(IFormFile file)
         {
-            User? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, UserProperties.Files.ToString());
-            if (dbUser == null)
-            {
-                return (false, "User with such id was not found");
-            }
+            SavedFile? savedFile = null;
             if (file == null || file.Length == 0)
             {
-                return (false, "File was empty or null");
+                return (savedFile, "File was empty or null");
             }
             using (var stream = new MemoryStream())
             {
                 await file.CopyToAsync(stream);
-                Domain.Models.SavedFile fileDb = new SavedFile()
+                savedFile = new SavedFile()
                 {
                     FileName = file.FileName,
                     ContentType = file.ContentType,
                     Content = stream.ToArray()
                 };
-                if (!isAvatar)
-                {
-                    dbUser.Files.Add(fileDb);
-                }
-                else
-                {
-                    await file.CopyToAsync(stream);
-                    byte[] imageBytes = stream.ToArray();
-                    dbUser.Image = imageBytes;
-                }
-                await _userRepository.UpdateAsync(dbUser);
-                await _userRepository.SaveChangesAsync();
             }
-            return (true, string.Empty);
+            return (savedFile, string.Empty);
         }
     }
 }
