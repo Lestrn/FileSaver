@@ -127,6 +127,29 @@ namespace FileSaver.API.Controllers
                 return BadRequest();
             }
             return Ok();
-        } 
+        }
+        [HttpPut]
+        [Route("[action]")]
+        public async Task<IActionResult> SendFriendRequest(Guid senderid, string receiverUsername)
+        {
+            var res = await _userService.SendFriendRequest(senderid, receiverUsername);
+            if (!res.isSent)
+            {
+                return BadRequest(res.errorMsg);
+            }
+            return Ok();
+        }
+        [HttpPut]
+        [Route("[action]")]
+        public async Task<IActionResult> AcceptFriendRequest(Guid senderId, Guid receiverId)
+        {
+            var res = await _userService.AcceptFriendRequest(senderId, receiverId);
+            if (!res.accepted)
+            {
+                return BadRequest(res.errorMsg);
+            }
+            return Ok();
+        }
+
     }
 }

@@ -60,6 +60,11 @@ namespace FileSaver.Infrastructure.Authentication.Services
             {
                 return JObject.FromObject(new {status = "Bad request", code = 404, message = "Email already exists" });
             }
+            bool UserNameAlreadyExists = await _userRepository.Any(dbUser => dbUser.Username == user.Username);
+            if (UserNameAlreadyExists)
+            {
+                return JObject.FromObject(new { status = "Bad request", code = 404, message = "Username already exists" });
+            }
             bool passwordIsValid = Regex.IsMatch(user.Password, "(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}");
             if (!passwordIsValid)
             {
@@ -85,7 +90,7 @@ namespace FileSaver.Infrastructure.Authentication.Services
                     CorrectCode = codeHash,
                     Username = user.Username
                 };
-                _pendingUserRepository.AddAsync(unconfirmedUserDb);
+                _pendingUserRepository.Add(unconfirmedUserDb);
                 await _pendingUserRepository.SaveChangesAsync();
                 var responseNewUser = new
                 {
@@ -127,7 +132,7 @@ namespace FileSaver.Infrastructure.Authentication.Services
                     Password = unconfirmedUserDbModel.Password,
                     Username = unconfirmedUserDbModel.Username
                 };
-                _userRepository.AddAsync(userDbModel);
+                _userRepository.Add(userDbModel);
             }
             _pendingUserRepository.DeleteAsync(unconfirmedUserDbModel);
             await _userRepository.SaveChangesAsync();
@@ -159,7 +164,7 @@ namespace FileSaver.Infrastructure.Authentication.Services
                     Password = userDbModel.Password,
                     Username = userDbModel.Username
                 };
-                _pendingUserRepository.AddAsync(unconfirmedUserDbModel);
+                _pendingUserRepository.Add(unconfirmedUserDbModel);
                 await _pendingUserRepository.SaveChangesAsync();
                 var responseAdded = new
                 {

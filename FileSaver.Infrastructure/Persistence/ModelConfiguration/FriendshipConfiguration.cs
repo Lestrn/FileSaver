@@ -15,15 +15,15 @@ namespace FileSaver.Infrastructure.Persistence.Modelconfiguration
         public void Configure(EntityTypeBuilder<Friendship> modelBuilder)
         {
             modelBuilder
-             .HasOne(f => f.User1)
+             .HasOne(f => f.SenderUser)
              .WithMany(u => u.Friendships)
-             .HasForeignKey(f => f.UserID1)
+             .HasForeignKey(f => f.SenderUserID)
              .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder
-                .HasOne(f => f.User2)
+                .HasOne(f => f.ReceiverUser)
                 .WithMany()
-                .HasForeignKey(f => f.UserID2)
+                .HasForeignKey(f => f.ReceiverUserID)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

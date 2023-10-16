@@ -20,7 +20,7 @@ namespace FileSaver.Infrastructure.Persistence
             _context = dbContext;
             _dbSet = _context.Set<TEntity>();
         }
-        public bool AddAsync(TEntity entity)
+        public bool Add(TEntity entity)
         {
             if(entity == null)
             {

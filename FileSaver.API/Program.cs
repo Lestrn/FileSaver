@@ -23,9 +23,11 @@ namespace FileSaver.API
             // Add services to the container.
             builder.Services.AddDbContext<FileSaverContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddScoped<IEntityRepository<User>, EntityRepository<User>>();
-            builder.Services.AddScoped<IEntityRepository<Domain.Models.SavedFile>, EntityRepository<Domain.Models.SavedFile>>();
+            builder.Services.AddScoped<IEntityRepository<SavedFile>, EntityRepository<SavedFile>>();
             builder.Services.AddScoped<IEntityRepository<PendingUser>, EntityRepository<PendingUser>>();
             builder.Services.AddScoped<IEntityRepository<SharedFile>, EntityRepository<SharedFile>>();
+            builder.Services.AddScoped<IEntityRepository<Friendship>, EntityRepository<Friendship>>();
+            builder.Services.AddScoped<IEntityRepository<Message>, EntityRepository<Message>>();
             IConfiguration config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)

@@ -13,10 +13,10 @@ namespace FileSaver.Domain.Models
     public class Friendship : IEntity
     {
         public Guid Id { get; set; }
-        public Guid UserID1 { get; set; }
-        public Guid UserID2 { get; set; }
+        public Guid SenderUserID { get; set; }
+        public Guid ReceiverUserID { get; set; }
         public FriendshipStatus Status { get; set; }
-        public virtual User User1 { get; set; }
-        public virtual User User2 { get; set; }
+        public virtual User SenderUser { get; set; }
+        public virtual User ReceiverUser { get; set; }
     }
 }

@@ -19,13 +19,22 @@ namespace FileSaver.Application.Services
         private IEntityRepository<User> _userRepository;
         private IEntityRepository<SavedFile> _fileRepository;
         private IEntityRepository<SharedFile> _sharedFileRepository;
+        private IEntityRepository<Friendship> _friendshipRepository;
+        private IEntityRepository<Message> _messageRepository;
         private IMapper _mapper;
-        public UserService(IEntityRepository<User> userRepository, IEntityRepository<SavedFile> fileRepository, IEntityRepository<SharedFile> sharedFileRepositor, IMapper mapper)
+        public UserService(IEntityRepository<User> userRepository,
+            IEntityRepository<SavedFile> fileRepository,
+            IEntityRepository<SharedFile> sharedFileRepositor,
+            IMapper mapper,
+            IEntityRepository<Friendship> friendshipRepository,
+            IEntityRepository<Message> messageRepository)
         {
             _userRepository = userRepository;
             _fileRepository = fileRepository;
             _sharedFileRepository = sharedFileRepositor;
             _mapper = mapper;
+            _friendshipRepository = friendshipRepository;
+            _messageRepository = messageRepository;
         }
         public async Task<bool> UpdateRole(Guid userId, UserRoles role)
         {
@@ -168,6 +177,44 @@ namespace FileSaver.Application.Services
             await _userRepository.UpdateAsync(dbUser);
             await _userRepository.SaveChangesAsync();
             return (true, string.Empty);
+        }
+
+        public async Task<(bool isSent, string errorMsg)> SendFriendRequest(Guid senderId, string username) 
+        {
+            User? sender = await _userRepository.FindByIdWithIncludesAsync(senderId, UserProperties.Friendships.ToString());
+            if(sender == null)
+            { 
+                return (false, "sender was not found");
+            }
+            User? receiver = (await _userRepository.Where(user => user.Username == username)).FirstOrDefault();
+            if (receiver == null)
+            {
+                return (false, "receiver was not found");
+            }
+            Guid receiverId = receiver.Id;
+            bool friendshipExists = await _friendshipRepository.Any(fs => (fs.SenderUserID == senderId && fs.ReceiverUserID == receiverId) || (fs.SenderUserID == receiverId && fs.ReceiverUserID == senderId));
+            if(friendshipExists)
+            {
+                return (false, "friendship already exists, or request has already been sent");
+            }
+            Friendship friendship = new Friendship() { Status = FriendshipStatus.Pending, SenderUser = sender, ReceiverUser = receiver };
+            _friendshipRepository.Add(friendship);
+            await _userRepository.SaveChangesAsync();
+            return (true, string.Empty);
+        } 
+
+        public async Task<(bool accepted, string errorMsg)> AcceptFriendRequest(Guid receiverId, Guid senderId)
+        {
+            Friendship? friendship = (await _friendshipRepository.Where(fs => fs.ReceiverUserID == receiverId && fs.SenderUserID == senderId)).FirstOrDefault();
+            if (friendship == null)
+            {
+                return (false, "sent request was not found");
+            }
+            friendship.Status = FriendshipStatus.Accepted;
+            await _friendshipRepository.UpdateAsync(friendship);
+            await _friendshipRepository.SaveChangesAsync();
+            return (true, string.Empty);
+
         }
 
         private bool IsImage(string contentType)

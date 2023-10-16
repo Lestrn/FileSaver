@@ -9,6 +9,9 @@ namespace FileSaver.Domain.Enums
     public enum UserProperties
     {
         Files,
-        SharedFiles
+        SharedFiles,
+        Friendships,
+        SentMessages,
+        ReceivedMessages
     }
 }

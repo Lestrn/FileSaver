@@ -9,7 +9,7 @@ namespace FileSaver.Domain.Interfaces
     public interface IEntityRepository<TEntity>
     {
         public Task<List<TEntity>> GetAllAsync();
-        public bool AddAsync(TEntity entity);
+        public bool Add(TEntity entity);
         public bool DeleteAsync(TEntity entity);
         public Task UpdateAsync(TEntity entity);
         public Task SaveChangesAsync();
