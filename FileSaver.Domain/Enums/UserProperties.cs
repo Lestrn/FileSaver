@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace FileSaver.Domain.Enums
 {
-    internal class UserProperties
+    public enum UserProperties
     {
+        Files,
+        SharedFiles
     }
 }

@@ -79,24 +79,7 @@ namespace FileSaver.Application.Services
             await _fileRepository.SaveChangesAsync();
             return true;
         }
-        public async Task<bool> UploadFile(Guid userId, IFormFile file)
-        {
-            var res = await UploadFileGeneral(userId, file);
-            return res.isUploaded;
-        }
-        public async Task<(bool isUploaded, string errorMsg)> UploadAvatar(Guid userId, IFormFile image)
-        {
-            if (image == null || image.Length == 0)
-            {
-                return (false, "Invalid file");
-            }        
-            if (!IsImage(image.ContentType))
-            {
-                return (false, "Only image files are allowed.");
-            }
-            var res = await UploadFileGeneral(userId, image,  true);
-            return(res.isUploaded, res.errorMsg);
-        }
+
         public async Task<(bool isChanged, string message)> ChangePassword(Guid userId, string newPassoword)
         {
             User? userDbModel = await _userRepository.FindByIdAsync(userId);
@@ -146,7 +129,26 @@ namespace FileSaver.Application.Services
             await _fileRepository.SaveChangesAsync();
             return true;
         }
-  
+
+        public async Task<bool> UploadFile(Guid userId, IFormFile file)
+        {
+            var res = await UploadFileGeneral(userId, file);
+            return res.isUploaded;
+        }
+
+        public async Task<(bool isUploaded, string errorMsg)> UploadAvatar(Guid userId, IFormFile image)
+        {
+            if (image == null || image.Length == 0)
+            {
+                return (false, "Invalid file");
+            }
+            if (!IsImage(image.ContentType))
+            {
+                return (false, "Only image files are allowed.");
+            }
+            var res = await UploadFileGeneral(userId, image, true);
+            return (res.isUploaded, res.errorMsg);
+        }
 
         private bool IsImage(string contentType)
         {
