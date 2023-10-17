@@ -6,6 +6,7 @@ using FileSaver.Domain.Models.Mapping.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using System.Data;
 
 namespace FileSaver.API.Controllers
@@ -150,6 +151,45 @@ namespace FileSaver.API.Controllers
             }
             return Ok();
         }
-
+        [HttpPut]
+        [Route("[action]")]
+        public async Task<IActionResult> DenyFriendRequest(Guid senderId, Guid receiverId)
+        {
+            var res = await _userService.DenyFriendRequest(senderId, receiverId);
+            if (!res.declined)
+            {
+                return BadRequest(res.errorMsg);
+            }
+            return Ok();
+        }
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<JsonResult> ShowPendingFriendRequests(Guid userId)
+        {
+            return new JsonResult(await _userService.ShowAllPendingFriendRequests(userId));
+        }
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<JsonResult> ShowAcceptedFriendRequests(Guid userId)
+        {
+            return new JsonResult(await _userService.ShowAllAcceptedFriendRequests(userId));
+        }
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<JsonResult> ShowDeclinedFriendRequests(Guid userId)
+        {
+            return new JsonResult(await _userService.ShowAllDeclinedFriendRequests(userId));
+        }
+        [HttpDelete]
+        [Route("[action]")]
+        public async Task<IActionResult> DeleteFriendship(Guid senderId, Guid receiverId)
+        {
+            bool isDeleted = await _userService.DeleteFriendship(senderId, receiverId);
+            if (!isDeleted)
+            {
+                return BadRequest("Friendship was not found");
+            }
+            return Ok();    
+        }
     }
 }

@@ -31,7 +31,7 @@ namespace FileSaver.Infrastructure.Persistence
            
         }
 
-        public bool DeleteAsync(TEntity entity)
+        public bool Delete(TEntity entity)
         {
             if (entity == null)
             {

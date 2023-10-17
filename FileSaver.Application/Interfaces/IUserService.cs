@@ -3,6 +3,7 @@ using FileSaver.Domain.Enums;
 using FileSaver.Domain.Models;
 using FileSaver.Domain.Models.Mapping.Models;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json.Linq;
 
 namespace FileSaver.Application.Interfaces
 {
@@ -20,5 +21,10 @@ namespace FileSaver.Application.Interfaces
         public Task<bool> ShareFile(UserFileShareDTO userShare);
         public Task<(bool isSent, string errorMsg)> SendFriendRequest(Guid senderId, string username);
         public Task<(bool accepted, string errorMsg)> AcceptFriendRequest(Guid senderId, Guid receiverId);
+        public Task<(bool declined, string errorMsg)> DenyFriendRequest(Guid senderId, Guid receiverId);
+        public Task<List<FriendshipModel>> ShowAllPendingFriendRequests(Guid userId);
+        public Task<List<FriendshipModel>?> ShowAllAcceptedFriendRequests(Guid userId);
+        public Task<List<FriendshipModel>> ShowAllDeclinedFriendRequests(Guid userId);
+        public Task<bool> DeleteFriendship(Guid senderId, Guid receiverId);
     }
 }

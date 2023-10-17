@@ -134,7 +134,7 @@ namespace FileSaver.Infrastructure.Authentication.Services
                 };
                 _userRepository.Add(userDbModel);
             }
-            _pendingUserRepository.DeleteAsync(unconfirmedUserDbModel);
+            _pendingUserRepository.Delete(unconfirmedUserDbModel);
             await _userRepository.SaveChangesAsync();
             return true;
         }

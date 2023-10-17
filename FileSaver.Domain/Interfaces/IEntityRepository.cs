@@ -10,7 +10,7 @@ namespace FileSaver.Domain.Interfaces
     {
         public Task<List<TEntity>> GetAllAsync();
         public bool Add(TEntity entity);
-        public bool DeleteAsync(TEntity entity);
+        public bool Delete(TEntity entity);
         public Task UpdateAsync(TEntity entity);
         public Task SaveChangesAsync();
         public Task<TEntity?> FindByIdAsync(Guid id);

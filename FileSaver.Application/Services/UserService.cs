@@ -11,6 +11,7 @@ using AutoMapper;
 using FileSaver.Domain.Models.Mapping.Models;
 using static System.Net.Mime.MediaTypeNames;
 using System.IO;
+using System.Reflection.Metadata.Ecma335;
 
 namespace FileSaver.Application.Services
 {
@@ -84,7 +85,7 @@ namespace FileSaver.Application.Services
             {
                 return false;
             }
-            _fileRepository.DeleteAsync(fileDb);
+            _fileRepository.Delete(fileDb);
             await _fileRepository.SaveChangesAsync();
             return true;
         }
@@ -113,7 +114,7 @@ namespace FileSaver.Application.Services
             {
                 return false;
             }
-             _userRepository.DeleteAsync(userDb);
+             _userRepository.Delete(userDb);
             await _userRepository.SaveChangesAsync();
             return true;
         }
@@ -179,7 +180,7 @@ namespace FileSaver.Application.Services
             return (true, string.Empty);
         }
 
-        public async Task<(bool isSent, string errorMsg)> SendFriendRequest(Guid senderId, string username) 
+        public async Task<(bool isSent, string errorMsg)> SendFriendRequest(Guid senderId, string username) // If friend request was declined it cannot be sent again untill friendship deleted (only receiver can delete declined request)
         {
             User? sender = await _userRepository.FindByIdWithIncludesAsync(senderId, UserProperties.Friendships.ToString());
             if(sender == null)
@@ -195,7 +196,7 @@ namespace FileSaver.Application.Services
             bool friendshipExists = await _friendshipRepository.Any(fs => (fs.SenderUserID == senderId && fs.ReceiverUserID == receiverId) || (fs.SenderUserID == receiverId && fs.ReceiverUserID == senderId));
             if(friendshipExists)
             {
-                return (false, "friendship already exists, or request has already been sent");
+                return (false, "friendship already exists, or friend request has already been sent");
             }
             Friendship friendship = new Friendship() { Status = FriendshipStatus.Pending, SenderUser = sender, ReceiverUser = receiver };
             _friendshipRepository.Add(friendship);
@@ -205,18 +206,65 @@ namespace FileSaver.Application.Services
 
         public async Task<(bool accepted, string errorMsg)> AcceptFriendRequest(Guid senderId, Guid receiverId)
         {
+           var res = await SetFriendshipStatus(senderId, receiverId, FriendshipStatus.Accepted);
+            return(res.completed, res.errorMsg);
+        }
+        public async Task<(bool declined, string errorMsg)> DenyFriendRequest(Guid senderId, Guid receiverId)
+        {
+            var res = await SetFriendshipStatus(senderId, receiverId, FriendshipStatus.Declined);
+            return (res.completed, res.errorMsg);
+        }
+        public async Task<List<FriendshipModel>> ShowAllPendingFriendRequests(Guid userId) // Only receiver of friend request sees
+        {
+            return await ShowFriends(userId, FriendshipStatus.Pending);
+        }
+        public async Task<List<FriendshipModel>> ShowAllDeclinedFriendRequests(Guid userId) // Only receiver of friend request sees
+        {
+            return await ShowFriends(userId, FriendshipStatus.Declined);
+        }
+        public async Task<List<FriendshipModel>?> ShowAllAcceptedFriendRequests(Guid userId) //Receiver and Sender both see
+        {
+            List<Friendship> friendships = (await _friendshipRepository.Where(fs => (fs.SenderUserID == userId || fs.ReceiverUserID == userId) && fs.Status == FriendshipStatus.Accepted)).ToList();
+            List<FriendshipModel> friendshipsModel = new List<FriendshipModel>(friendships.Count);
+            friendships.ForEach(fs =>
+            {
+                friendshipsModel.Add(_mapper.Map<FriendshipModel>(fs));
+            });
+            return friendshipsModel;
+        }
+        public async Task<bool>  DeleteFriendship(Guid senderId, Guid receiverId)
+        {
+            Friendship? friendship = (await _friendshipRepository.Where(fs => fs.SenderUserID == senderId && fs.ReceiverUserID == receiverId)).FirstOrDefault();
+            if(friendship == null)
+            {
+                return false;
+            }
+            _friendshipRepository.Delete(friendship);
+            await _friendshipRepository.SaveChangesAsync();
+            return true;
+        }
+        private async Task<List<FriendshipModel>> ShowFriends(Guid userId, FriendshipStatus status) // General method for receiver
+        {
+            List<Friendship> friendships = (await _friendshipRepository.Where(fs => fs.ReceiverUserID == userId && fs.Status == status)).ToList();
+            List<FriendshipModel> friendshipsModel = new List<FriendshipModel>(friendships.Count);
+            friendships.ForEach(fs =>
+            {
+                friendshipsModel.Add(_mapper.Map<FriendshipModel>(fs));
+            });
+            return friendshipsModel;
+        }
+        private async Task<(bool completed, string errorMsg)> SetFriendshipStatus(Guid senderId, Guid receiverId, FriendshipStatus status)
+        {
             Friendship? friendship = (await _friendshipRepository.Where(fs => fs.ReceiverUserID == receiverId && fs.SenderUserID == senderId)).FirstOrDefault();
             if (friendship == null)
             {
                 return (false, "sent request was not found");
             }
-            friendship.Status = FriendshipStatus.Accepted;
+            friendship.Status = status;
             await _friendshipRepository.UpdateAsync(friendship);
             await _friendshipRepository.SaveChangesAsync();
             return (true, string.Empty);
-
         }
-
         private bool IsImage(string contentType)
         {
             string[] allowedContentTypes = { "image/jpeg", "image/png", "image/bmp" };
