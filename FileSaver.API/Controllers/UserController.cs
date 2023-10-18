@@ -108,25 +108,25 @@ namespace FileSaver.API.Controllers
             }
             return Ok();
         }
-        [HttpDelete]
-        [Route("[action]")]
-        public async Task<IActionResult> DeleteAccount(UserDTODelete user)
-        {
-            bool isDeleted = await _userService.DeleteAccount(user);
-            if (!isDeleted)
-            {
-                return BadRequest();
-            }
-            return Ok();
-        }
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> ShareFile(UserFileShareDTO share)
         {
-            bool isShared = await _userService.ShareFile(share);
-            if (!isShared)
+            var  res = await _userService.ShareFile(share);
+            if (!res.isShared)
             {
-                return BadRequest();
+                return BadRequest(res.errorMsg);
+            }
+            return Ok();
+        }
+        [HttpDelete]
+        [Route("[action]")]
+        public async Task<IActionResult> StopSharingFile(UserFileShareDTO share)
+        {
+            var res = await _userService.StopSharing(share);
+            if (!res.isStopped)
+            {
+                return BadRequest(res.errorMsg);
             }
             return Ok();
         }

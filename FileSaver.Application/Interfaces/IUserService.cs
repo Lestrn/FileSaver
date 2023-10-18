@@ -17,8 +17,8 @@ namespace FileSaver.Application.Interfaces
         public Task<bool> DeleteFile(Guid fileId);
         public Task<(bool isUploaded, string errorMsg)> UploadAvatar(Guid userId, IFormFile image);
         public Task<(bool isChanged, string message)> ChangePassword(Guid userId, string newPassoword);
-        public Task<bool> DeleteAccount(UserDTODelete user);
-        public Task<bool> ShareFile(UserFileShareDTO userShare);
+        public Task<(bool isShared, string errorMsg)> ShareFile(UserFileShareDTO userShare);
+        public Task<(bool isStopped, string errorMsg)> StopSharing(UserFileShareDTO userShare);
         public Task<(bool isSent, string errorMsg)> SendFriendRequest(Guid senderId, string username);
         public Task<(bool accepted, string errorMsg)> AcceptFriendRequest(Guid senderId, Guid receiverId);
         public Task<(bool declined, string errorMsg)> DenyFriendRequest(Guid senderId, Guid receiverId);

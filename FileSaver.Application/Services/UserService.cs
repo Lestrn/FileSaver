@@ -71,7 +71,13 @@ namespace FileSaver.Application.Services
             {             
                 userFiles.Add(_mapper.Map<SavedFileModel>(file));
             }
-            List<SavedFile> receivedFiles = (await _sharedFileRepository.Where(sf => sf.SharedWithUserId == userId)).Select(sf => sf.File).ToList();
+            List<SharedFile> sharedFiles = (await _sharedFileRepository.Where(sf => sf.SharedWithUserId == userId)).ToList();
+            List<SharedFile> sharedFilesWithIncludes = new List<SharedFile>(sharedFiles.Count);
+            for (int i = 0; i < sharedFiles.Count; i++)
+            {
+                sharedFilesWithIncludes.Add(await _sharedFileRepository.FindByIdWithIncludesAsync(sharedFiles[i].Id, SharedFileProperties.File.ToString()));
+            }
+            List<SavedFile> receivedFiles = sharedFilesWithIncludes.Select(sf => sf.File).ToList();
             foreach (var file in receivedFiles)
             {
                 userFiles.Add(_mapper.Map<SavedFileModel>(file));
@@ -107,39 +113,45 @@ namespace FileSaver.Application.Services
             await _userRepository.SaveChangesAsync();
             return (true, string.Empty);
         }
-        public async Task<bool> DeleteAccount(UserDTODelete user)
+        public async Task<(bool isShared, string errorMsg)> ShareFile(UserFileShareDTO userShare)
         {
-            User? userDb = await _userRepository.FindByIdAsync(user.Id);
-            if (userDb == null)
+            if(!await AreFriends(userShare.OwnerId, userShare.SharedWithId))
             {
-                return false;
+                return (false, "These users are not friends");
             }
-             _userRepository.Delete(userDb);
-            await _userRepository.SaveChangesAsync();
-            return true;
-        }
-        public async Task<bool> ShareFile(UserFileShareDTO userShare)
-        {
             User? fileOwnerDb = await _userRepository.FindByIdWithIncludesAsync(userShare.OwnerId, UserProperties.Files.ToString(), UserProperties.SharedFiles.ToString());
             if (fileOwnerDb == null)
             {
-                return false;
+                return (false, "Owner of file was not found");
             }
             SavedFile sharedFile = fileOwnerDb.Files.Where(file => file.Id == userShare.FileId).FirstOrDefault();
             if (sharedFile == null)
             {
-                return false;
+                return (false, "File was not  found");
             }
             User? sharedWith = await _userRepository.FindByIdAsync(userShare.SharedWithId);
             if (sharedWith == null || fileOwnerDb.SharedFiles == null)
             {
-                return false;
+                return (false, "Shared user was not found");
             }
             fileOwnerDb.SharedFiles.Add(new SharedFile { File = sharedFile, SharedByUser = fileOwnerDb, SharedWithUser = sharedWith });
             await _fileRepository.SaveChangesAsync();
-            return true;
+            return (true, string.Empty);
         }
+        public async Task<(bool isStopped, string errorMsg)> StopSharing(UserFileShareDTO userShare)
+        {
+            SharedFile? sharedFile = (await _sharedFileRepository.Where(sf => sf.SharedByUserId == userShare.OwnerId && sf.SharedWithUserId == userShare.SharedWithId && sf.FileId == userShare.FileId))
+                .FirstOrDefault();
+            if(sharedFile == null)
+            {
+                return (false, "Shared file was not found");
+            }
+            _sharedFileRepository.Delete(sharedFile);
+            await _userRepository.SaveChangesAsync();
+            return (true, string.Empty);
 
+
+        }
         public async Task<bool> UploadFile(Guid userId, IFormFile file)
         {
             User? dbUser = await _userRepository.FindByIdWithIncludesAsync(userId, UserProperties.Files.ToString());
