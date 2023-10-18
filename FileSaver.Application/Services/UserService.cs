@@ -259,6 +259,20 @@ namespace FileSaver.Application.Services
             );
             return messagesModel;
         }
+        public async Task<List<MessageModel>?> ShowSentMessages(Guid userid)
+        {
+            User? sender = await _userRepository.FindByIdWithIncludesAsync(userid, UserProperties.SentMessages.ToString());
+            if (sender == null)
+            {
+                return null;
+            }
+            List<Message> messages = sender.SentMessages.ToList();
+            List<MessageModel> messagesModel = new List<MessageModel>(messages.Count);
+            messages.ForEach(msg =>
+            messagesModel.Add(_mapper.Map<MessageModel>(msg))
+            );
+            return messagesModel;
+        }
         public async Task<(bool isSent, string errorMsg)> SendMessage(Guid senderId, Guid receiverId, string content)
         {
             User? sender = await _userRepository.FindByIdWithIncludesAsync(senderId, UserProperties.SentMessages.ToString());
@@ -275,10 +289,21 @@ namespace FileSaver.Application.Services
             {
                 return (false, "Users are not friends");
             }
-            Message message = new Message { Content = content, Sender = sender, Receiver = receiver, Timestamp = DateTime.Now };
+            Message message = new Message { Content = content, Sender = sender, Receiver = receiver, Timestamp = DateTime.UtcNow };
             sender.SentMessages.Add(message);
             receiver.ReceivedMessages.Add(message);
             await _userRepository.SaveChangesAsync();
+            return (true, string.Empty);
+        }
+        public async Task<(bool isDeleted, string errorMsg)> DeleteMessage(Guid msgId)
+        {
+            Message? message = await _messageRepository.FindByIdAsync(msgId);
+            if (message == null)
+            {
+                return (false, "message was not found");
+            }
+            _messageRepository.Delete(message);
+            await _messageRepository.SaveChangesAsync();
             return (true, string.Empty);
         }
         #endregion

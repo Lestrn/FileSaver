@@ -199,12 +199,30 @@ namespace FileSaver.API.Controllers
             List<MessageModel>? messages = await _userService.ShowReceivedMessages(userId);
             return new JsonResult(messages);
         }
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<JsonResult> ShowSentMessages(Guid userId)
+        {
+            List<MessageModel>? messages = await _userService.ShowSentMessages(userId);
+            return new JsonResult(messages);
+        }
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> SendMessage(Guid senderId, Guid receiverId, string content)
         {
             var res = await _userService.SendMessage(senderId, receiverId, content);
             if(!res.isSent)
+            {
+                return BadRequest(res.errorMsg);
+            }
+            return Ok();
+        }
+        [HttpDelete]
+        [Route("[action]")]
+        public async Task<IActionResult> DeleteMessage(Guid msgId)
+        {
+           var res = await _userService.DeleteMessage(msgId);
+            if(!res.isDeleted)
             {
                 return BadRequest(res.errorMsg);
             }
