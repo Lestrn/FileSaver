@@ -179,7 +179,7 @@ namespace FileSaver.Application.Services
             await _userRepository.SaveChangesAsync();
             return (true, string.Empty);
         }
-
+        #region Friendship logic
         public async Task<(bool isSent, string errorMsg)> SendFriendRequest(Guid senderId, string username) // If friend request was declined it cannot be sent again untill friendship deleted (only receiver can delete declined request)
         {
             User? sender = await _userRepository.FindByIdWithIncludesAsync(senderId, UserProperties.Friendships.ToString());
@@ -243,6 +243,46 @@ namespace FileSaver.Application.Services
             await _friendshipRepository.SaveChangesAsync();
             return true;
         }
+        #endregion
+        #region Message logic
+        public async Task<List<MessageModel>?> ShowReceivedMessages(Guid userid)
+        {
+            User? receiver = await _userRepository.FindByIdWithIncludesAsync(userid, UserProperties.ReceivedMessages.ToString());
+            if (receiver == null)
+            {
+                return null;
+            }
+            List<Message> messages = receiver.ReceivedMessages.ToList();
+            List<MessageModel> messagesModel = new List<MessageModel>(messages.Count);
+            messages.ForEach(msg => 
+            messagesModel.Add(_mapper.Map<MessageModel>(msg))
+            );
+            return messagesModel;
+        }
+        public async Task<(bool isSent, string errorMsg)> SendMessage(Guid senderId, Guid receiverId, string content)
+        {
+            User? sender = await _userRepository.FindByIdWithIncludesAsync(senderId, UserProperties.SentMessages.ToString());
+            User? receiver = await _userRepository.FindByIdWithIncludesAsync(receiverId, UserProperties.ReceivedMessages.ToString());
+            if(sender == null)
+            {
+                return (false, "Sender id was invalid");
+            }
+            if(receiver == null)
+            {
+                return (false, "Receiver id was invalid");
+            }
+            if(!await AreFriends(senderId, receiverId))
+            {
+                return (false, "Users are not friends");
+            }
+            Message message = new Message { Content = content, Sender = sender, Receiver = receiver, Timestamp = DateTime.Now };
+            sender.SentMessages.Add(message);
+            receiver.ReceivedMessages.Add(message);
+            await _userRepository.SaveChangesAsync();
+            return (true, string.Empty);
+        }
+        #endregion
+        #region Private logic
         private async Task<List<FriendshipModel>> ShowFriends(Guid userId, FriendshipStatus status) // General method for receiver
         {
             List<Friendship> friendships = (await _friendshipRepository.Where(fs => fs.ReceiverUserID == userId && fs.Status == status)).ToList();
@@ -289,5 +329,12 @@ namespace FileSaver.Application.Services
             }
             return (savedFile, string.Empty);
         }
+        private async Task<bool> AreFriends(Guid user1, Guid user2)
+        {
+            bool areFriends = await _friendshipRepository
+                 .Any(fs => (fs.SenderUserID == user1 && fs.ReceiverUserID == user2) || (fs.SenderUserID == user2 && fs.ReceiverUserID == user1) && fs.Status == FriendshipStatus.Accepted);
+            return areFriends;
+        }
+        #endregion
     }
 }

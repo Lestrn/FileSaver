@@ -26,5 +26,7 @@ namespace FileSaver.Application.Interfaces
         public Task<List<FriendshipModel>?> ShowAllAcceptedFriendRequests(Guid userId);
         public Task<List<FriendshipModel>> ShowAllDeclinedFriendRequests(Guid userId);
         public Task<bool> DeleteFriendship(Guid senderId, Guid receiverId);
+        public Task<List<MessageModel>?> ShowReceivedMessages(Guid userid);
+        public Task<(bool isSent, string errorMsg)> SendMessage(Guid senderId, Guid receiverId, string content);
     }
 }

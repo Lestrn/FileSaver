@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System.Data;
+using System.Reflection.Metadata.Ecma335;
 
 namespace FileSaver.API.Controllers
 {
@@ -190,6 +191,24 @@ namespace FileSaver.API.Controllers
                 return BadRequest("Friendship was not found");
             }
             return Ok();    
+        }
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<JsonResult> ShowReceivedMessages(Guid userId)
+        {
+            List<MessageModel>? messages = await _userService.ShowReceivedMessages(userId);
+            return new JsonResult(messages);
+        }
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> SendMessage(Guid senderId, Guid receiverId, string content)
+        {
+            var res = await _userService.SendMessage(senderId, receiverId, content);
+            if(!res.isSent)
+            {
+                return BadRequest(res.errorMsg);
+            }
+            return Ok();
         }
     }
 }

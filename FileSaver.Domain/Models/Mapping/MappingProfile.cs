@@ -15,6 +15,7 @@ namespace FileSaver.Domain.Models.Mapping
             this.CreateMap<SavedFile, SavedFileModel>();
             this.CreateMap<User, UserModelEmailRole>();
             this.CreateMap<Friendship, FriendshipModel>();
+            this.CreateMap<Message, MessageModel>();
         }
     }
 }
