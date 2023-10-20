@@ -215,7 +215,7 @@ namespace FileSaver.Infrastructure.Authentication.Services
         }
         private Task<JObject> GenerateToken(User dbUser)
         {
-            var claims = new List<Claim> { new Claim(ClaimTypes.Name, dbUser.Email), new Claim(ClaimTypes.Role, dbUser.Role.ToString()) };
+            var claims = new List<Claim> {new Claim(ClaimTypes.NameIdentifier, dbUser.Id.ToString()),  new Claim(ClaimTypes.Email, dbUser.Email), new Claim(ClaimTypes.Role, dbUser.Role.ToString()) };
             AuthOptions authOptions = new AuthOptions(_config);
             var jwt = new JwtSecurityToken(
                     issuer: authOptions.Issuer,

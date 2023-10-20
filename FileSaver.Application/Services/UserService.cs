@@ -301,7 +301,7 @@ namespace FileSaver.Application.Services
             {
                 return (false, "Users are not friends");
             }
-            Message message = new Message { Content = content, Sender = sender, Receiver = receiver, Timestamp = DateTime.UtcNow };
+            Message message = new Message { Content = content, Sender = sender, Receiver = receiver, Timestamp = DateTime.Now };
             sender.SentMessages.Add(message);
             receiver.ReceivedMessages.Add(message);
             await _userRepository.SaveChangesAsync();

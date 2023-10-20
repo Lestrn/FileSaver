@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System.Data;
 using System.Reflection.Metadata.Ecma335;
-
+using System.Security.Claims;
 namespace FileSaver.API.Controllers
 {
     [Route("api/[controller]")]
@@ -27,12 +27,20 @@ namespace FileSaver.API.Controllers
         [Route("[action]")]
         public async Task<IActionResult> UploadFile(Guid userId, IFormFile file)
         {
+            if (! await ClaimsAreEqualToInput(userId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             return await _userService.UploadFile(userId, file) ? Ok() : BadRequest();
         }
         [HttpGet]
         [Route("[action]")]
-        public async Task<IActionResult> DownloadFile(Guid fileId)
+        public async Task<IActionResult> DownloadFile(Guid fileId, Guid ownerId)
         {
+            if (!await ClaimsAreEqualToInput(ownerId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             SavedFile file = await _userService.GetFileById(fileId);
             if (file != null)
             {
@@ -68,28 +76,40 @@ namespace FileSaver.API.Controllers
         [HttpGet]
         [Route("[action]")]
         [Authorize(Roles = "Admin")]
-        public async Task<JsonResult> GetAllUsers()
+        public async Task<IActionResult> GetAllUsers()
         {
             List<UserModelEmailRole> userDTOEmailRole = await _userService.GetAllUsers();
-            return new JsonResult(userDTOEmailRole);
+            return Ok(new JsonResult(userDTOEmailRole));
         }
         [HttpGet]
         [Route("[action]")]
-        public async Task<JsonResult> GetAllFilesByUserId(Guid userId)
+        public async Task<IActionResult> GetAllFilesByUserId(Guid userId)
         {
+            if (!await ClaimsAreEqualToInput(userId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             List<SavedFileModel> fileDbModels = await _userService.GetAllFilesByUserId(userId);
-            return new JsonResult(fileDbModels);
+            return  Ok(new JsonResult(fileDbModels));
         }
         [HttpDelete]
         [Route("[action]")]
-        public async Task<IActionResult> DeleteFileById(Guid fileId)
+        public async Task<IActionResult> DeleteFileById(Guid fileId, Guid ownerId)
         {
+            if (!await ClaimsAreEqualToInput(ownerId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             return await _userService.DeleteFile(fileId) ? Ok() : NotFound();
         }
         [HttpPut]
         [Route("[action]")]
         public async Task<IActionResult> UploadAvatar(Guid userId, IFormFile image)
         {
+            if (!await ClaimsAreEqualToInput(userId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             var uploadResult = await _userService.UploadAvatar(userId, image);
             if (!uploadResult.isUploaded)
             {
@@ -101,6 +121,10 @@ namespace FileSaver.API.Controllers
         [Route("[action]")]
         public async Task<IActionResult> ChangePassword(Guid userId, string newPassword)
         {
+            if (!await ClaimsAreEqualToInput(userId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             var res = await _userService.ChangePassword(userId, newPassword);
             if(!res.isChanged)
             {
@@ -112,6 +136,10 @@ namespace FileSaver.API.Controllers
         [Route("[action]")]
         public async Task<IActionResult> ShareFile(UserFileShareDTO share)
         {
+            if (!await ClaimsAreEqualToInput(share.OwnerId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             var  res = await _userService.ShareFile(share);
             if (!res.isShared)
             {
@@ -123,6 +151,10 @@ namespace FileSaver.API.Controllers
         [Route("[action]")]
         public async Task<IActionResult> StopSharingFile(UserFileShareDTO share)
         {
+            if (!await ClaimsAreEqualToInput(share.OwnerId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             var res = await _userService.StopSharing(share);
             if (!res.isStopped)
             {
@@ -134,6 +166,10 @@ namespace FileSaver.API.Controllers
         [Route("[action]")]
         public async Task<IActionResult> SendFriendRequest(Guid senderid, string receiverUsername)
         {
+            if (!await ClaimsAreEqualToInput(senderid))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             var res = await _userService.SendFriendRequest(senderid, receiverUsername);
             if (!res.isSent)
             {
@@ -145,6 +181,10 @@ namespace FileSaver.API.Controllers
         [Route("[action]")]
         public async Task<IActionResult> AcceptFriendRequest(Guid senderId, Guid receiverId)
         {
+            if (!await ClaimsAreEqualToInput(receiverId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             var res = await _userService.AcceptFriendRequest(senderId, receiverId);
             if (!res.accepted)
             {
@@ -156,6 +196,10 @@ namespace FileSaver.API.Controllers
         [Route("[action]")]
         public async Task<IActionResult> DenyFriendRequest(Guid senderId, Guid receiverId)
         {
+            if (!await ClaimsAreEqualToInput(receiverId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             var res = await _userService.DenyFriendRequest(senderId, receiverId);
             if (!res.declined)
             {
@@ -165,26 +209,43 @@ namespace FileSaver.API.Controllers
         }
         [HttpGet]
         [Route("[action]")]
-        public async Task<JsonResult> ShowPendingFriendRequests(Guid userId)
+        public async Task<IActionResult> ShowPendingFriendRequests(Guid userId)
         {
-            return new JsonResult(await _userService.ShowAllPendingFriendRequests(userId));
+            if (!await ClaimsAreEqualToInput(userId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
+            return Ok(new JsonResult(await _userService.ShowAllPendingFriendRequests(userId)));
         }
         [HttpGet]
         [Route("[action]")]
-        public async Task<JsonResult> ShowAcceptedFriendRequests(Guid userId)
+        public async Task<IActionResult> ShowAcceptedFriendRequests(Guid userId)
         {
-            return new JsonResult(await _userService.ShowAllAcceptedFriendRequests(userId));
+            if (!await ClaimsAreEqualToInput(userId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
+            return Ok(new JsonResult(await _userService.ShowAllAcceptedFriendRequests(userId)));
         }
         [HttpGet]
         [Route("[action]")]
-        public async Task<JsonResult> ShowDeclinedFriendRequests(Guid userId)
+        public async Task<IActionResult> ShowDeclinedFriendRequests(Guid userId)
         {
-            return new JsonResult(await _userService.ShowAllDeclinedFriendRequests(userId));
+            if (!await ClaimsAreEqualToInput(userId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
+            return Ok(new JsonResult(await _userService.ShowAllDeclinedFriendRequests(userId)));
         }
         [HttpDelete]
         [Route("[action]")]
         public async Task<IActionResult> DeleteFriendship(Guid senderId, Guid receiverId)
         {
+            if (!(await ClaimsAreEqualToInput(senderId) ^ await ClaimsAreEqualToInput(receiverId)))
+            {
+                return BadRequest("Credentials are invalid");          
+            }
+
             bool isDeleted = await _userService.DeleteFriendship(senderId, receiverId);
             if (!isDeleted)
             {
@@ -194,22 +255,34 @@ namespace FileSaver.API.Controllers
         }
         [HttpGet]
         [Route("[action]")]
-        public async Task<JsonResult> ShowReceivedMessages(Guid userId)
+        public async Task<IActionResult> ShowReceivedMessages(Guid userId)
         {
+            if (!await ClaimsAreEqualToInput(userId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             List<MessageModel>? messages = await _userService.ShowReceivedMessages(userId);
-            return new JsonResult(messages);
+            return Ok(new JsonResult(messages));
         }
         [HttpGet]
         [Route("[action]")]
-        public async Task<JsonResult> ShowSentMessages(Guid userId)
+        public async Task<IActionResult> ShowSentMessages(Guid userId)
         {
+            if (!await ClaimsAreEqualToInput(userId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
             List<MessageModel>? messages = await _userService.ShowSentMessages(userId);
-            return new JsonResult(messages);
+            return Ok(new JsonResult(messages));
         }
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> SendMessage(Guid senderId, Guid receiverId, string content)
         {
+            if (!await ClaimsAreEqualToInput(senderId))
+            {
+                return  BadRequest("Credentials are invalid");
+            }
             var res = await _userService.SendMessage(senderId, receiverId, content);
             if(!res.isSent)
             {
@@ -219,14 +292,27 @@ namespace FileSaver.API.Controllers
         }
         [HttpDelete]
         [Route("[action]")]
-        public async Task<IActionResult> DeleteMessage(Guid msgId)
+        public async Task<IActionResult> DeleteMessage(Guid msgId, Guid userId)
         {
-           var res = await _userService.DeleteMessage(msgId);
+            if (!await ClaimsAreEqualToInput(userId))
+            {
+                return BadRequest("Credentials are invalid");
+            }
+            var res = await _userService.DeleteMessage(msgId);
             if(!res.isDeleted)
             {
                 return BadRequest(res.errorMsg);
             }
             return Ok();
+        }
+        private Task<bool> ClaimsAreEqualToInput(Guid userId)
+        {
+            Guid userIdFromToken = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            if(userIdFromToken != userId)
+            {
+                return Task.FromResult(false);
+            }
+            return Task.FromResult(true);
         }
     }
 }
