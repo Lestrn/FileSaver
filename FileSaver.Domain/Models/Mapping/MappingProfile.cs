@@ -1,13 +1,8 @@
-﻿using AutoMapper;
-using FileSaver.Domain.Models.Mapping.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FileSaver.Domain.Models.Mapping
+﻿namespace FileSaver.Domain.Models.Mapping
 {
+    using AutoMapper;
+    using FileSaver.Domain.Models.Mapping.Models;
+
     public class MappingProfile : Profile
     {
         public MappingProfile()

@@ -1,19 +1,19 @@
-using FileSaver.Application.Interfaces;
-using FileSaver.Application.Services;
-using FileSaver.Domain.Interfaces;
-using FileSaver.Domain.Models;
-using FileSaver.Infrastructure.Authentication.Interfaces;
-using FileSaver.Infrastructure.Authentication;
-using FileSaver.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using FileSaver.Infrastructure.Authentication.Services;
-using FileSaver.Domain.Models.Mapping;
-
 namespace FileSaver.API
 {
+    using FileSaver.Application.Interfaces;
+    using FileSaver.Application.Services;
+    using FileSaver.Domain.Interfaces;
+    using FileSaver.Domain.Models;
+    using FileSaver.Domain.Models.Mapping;
+    using FileSaver.Infrastructure.Authentication;
+    using FileSaver.Infrastructure.Authentication.Interfaces;
+    using FileSaver.Infrastructure.Authentication.Services;
+    using FileSaver.Infrastructure.Persistence;
+    using Microsoft.AspNetCore.Authentication.JwtBearer;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.IdentityModel.Tokens;
+    using Microsoft.OpenApi.Models;
+
     public class Program
     {
         public static void Main(string[] args)
@@ -61,17 +61,17 @@ namespace FileSaver.API
                     Name = "Authorization",
                     Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
                     BearerFormat = "JWT",
-                    Scheme = "bearer"
+                    Scheme = "bearer",
                 });
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
                         new OpenApiSecurityScheme
                         {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
                         },
-                         new string[] {}
-                    }
+                        Array.Empty<string>()
+                    },
                 });
             });
             builder.Services.AddControllersWithViews();
@@ -84,6 +84,7 @@ namespace FileSaver.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();

@@ -1,58 +1,64 @@
-﻿using FileSaver.Domain.DTOs;
-using FileSaver.Infrastructure.Authentication.Interfaces;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
-
-namespace FileSaver.API.Controllers
+﻿namespace FileSaver.API.Controllers
 {
+    using FileSaver.Domain.DTOs;
+    using FileSaver.Infrastructure.Authentication.Interfaces;
+    using Microsoft.AspNetCore.Mvc;
+    using Newtonsoft.Json.Linq;
+
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private IAuthService _authService;
-        public AuthController(IAuthService userService)
+        private readonly IAuthService authService;
+
+        public AuthController(IAuthService authService)
         {
-            _authService = userService;
+            this.authService = authService;
         }
+
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> LogIn(UserLoginDTO user)
         {
-            JObject res = await _authService.LogIn(user);
-            return Ok(res.ToString());
+            JObject res = await this.authService.LogIn(user);
+            return this.Ok(res.ToString());
         }
+
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> Register(UserDTO user)
         {
-            JObject res = await _authService.Register(user);
-            return Ok(res.ToString());
+            JObject res = await this.authService.Register(user);
+            return this.Ok(res.ToString());
         }
+
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> ConfirmCode(string email, string code)
         {
-            bool isRegistered = await _authService.ConfirmCode(email, code);
+            bool isRegistered = await this.authService.ConfirmCode(email, code);
             if (!isRegistered)
             {
-                return BadRequest();
+                return this.BadRequest();
             }
-            return Ok();
+
+            return this.Ok();
         }
+
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> RecoverAccount(string email)
         {
-            JObject res = await _authService.RecoverAccount(email);
-            return Ok(res.ToString());
+            JObject res = await this.authService.RecoverAccount(email);
+            return this.Ok(res.ToString());
         }
+
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> ConfirmRecoveryCode(string email, string userCode)
         {
-            JObject res =  await _authService.RecoveryLogIn(email, userCode);
-            return Ok(res.ToString()); 
+            JObject res = await this.authService.RecoveryLogIn(email, userCode);
+            return this.Ok(res.ToString());
         }
     }
 }

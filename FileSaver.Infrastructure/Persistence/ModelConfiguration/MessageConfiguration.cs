@@ -1,15 +1,9 @@
-﻿using FileSaver.Domain.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FileSaver.Infrastructure.Persistence.Modelconfiguration
+﻿namespace FileSaver.Infrastructure.Persistence.Modelconfiguration
 {
+    using FileSaver.Domain.Models;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
     internal class MessageConfiguration : IEntityTypeConfiguration<Message>
     {
         public void Configure(EntityTypeBuilder<Message> modelBuilder)
