@@ -16,7 +16,9 @@
 
         public Task<SavedFile?> GetFileById(Guid fileId);
 
-        public Task<List<SavedFileModel>> GetAllFilesByUserId(Guid userId);
+        public Task<List<SavedFileModel>> ShowAllFilesByUserId(Guid userId);
+
+        public Task<List<SharedFileModel>> ShowFilesThatUserShares(Guid userId);
 
         public Task<bool> DeleteFile(Guid fileId);
 
@@ -36,7 +38,7 @@
 
         public Task<List<FriendshipModel>> ShowAllPendingFriendRequests(Guid userId);
 
-        public Task<List<FriendshipModel>?> ShowAllAcceptedFriendRequests(Guid userId);
+        public Task<List<FriendModel>?> ShowAllAcceptedFriendRequests(Guid userId);
 
         public Task<List<FriendshipModel>> ShowAllDeclinedFriendRequests(Guid userId);
 

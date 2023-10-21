@@ -11,6 +11,7 @@
             this.CreateMap<User, UserModelEmailRole>();
             this.CreateMap<Friendship, FriendshipModel>();
             this.CreateMap<Message, MessageModel>();
+            this.CreateMap<SharedFile, SharedFileModel>();
         }
     }
 }

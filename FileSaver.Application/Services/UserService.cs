@@ -63,7 +63,7 @@
             return await this.fileRepository.FindByIdAsync(fileId);
         }
 
-        public async Task<List<SavedFileModel>> GetAllFilesByUserId(Guid userId)
+        public async Task<List<SavedFileModel>> ShowAllFilesByUserId(Guid userId)
         {
             User? userDb = await this.userRepository.FindByIdWithIncludesAsync(userId, UserProperties.Files.ToString());
             if (userDb == null || userDb.Files == null)
@@ -92,6 +92,17 @@
             }
 
             return userFiles;
+        }
+
+        public async Task<List<SharedFileModel>> ShowFilesThatUserShares(Guid userId)
+        {
+            List<SharedFile> sharedFiles = (await this.sharedFileRepository.Where(sf => sf.SharedByUserId == userId)).ToList();
+            List<SharedFileModel> sharedFileModels = new List<SharedFileModel>(sharedFiles.Count);
+            sharedFiles.ForEach(sf =>
+            {
+                sharedFileModels.Add(this.mapper.Map<SharedFileModel>(sf));
+            });
+            return sharedFileModels;
         }
 
         public async Task<bool> DeleteFile(Guid fileId)
@@ -265,15 +276,20 @@
             return await this.ShowFriends(userId, FriendshipStatus.Declined);
         }
 
-        public async Task<List<FriendshipModel>?> ShowAllAcceptedFriendRequests(Guid userId) // Receiver and Sender both see
+        public async Task<List<FriendModel>?> ShowAllAcceptedFriendRequests(Guid userId) // Receiver and Sender both see
         {
-            List<Friendship> friendships = (await this.friendshipRepository.Where(fs => (fs.SenderUserID == userId || fs.ReceiverUserID == userId) && fs.Status == FriendshipStatus.Accepted)).ToList();
-            List<FriendshipModel> friendshipsModel = new List<FriendshipModel>(friendships.Count);
-            friendships.ForEach(fs =>
+            List<Friendship> friendshipsUserIsSender = (await this.friendshipRepository.Where(fs => (fs.SenderUserID == userId) && fs.Status == FriendshipStatus.Accepted)).ToList();
+            List<Friendship> friendshipsUserisReceiver = (await this.friendshipRepository.Where(fs => (fs.ReceiverUserID == userId) && fs.Status == FriendshipStatus.Accepted)).ToList();
+            List<FriendModel> friendModel = new List<FriendModel>(friendshipsUserIsSender.Count);
+            friendshipsUserIsSender.ForEach(fs =>
             {
-                friendshipsModel.Add(this.mapper.Map<FriendshipModel>(fs));
+                friendModel.Add(new FriendModel() { FriendId = fs.ReceiverUserID});
             });
-            return friendshipsModel;
+            friendshipsUserisReceiver.ForEach(fs =>
+            {
+                friendModel.Add(new FriendModel() { FriendId = fs.SenderUserID });
+            });
+            return friendModel;
         }
 
         public async Task<bool> DeleteFriendship(Guid senderId, Guid receiverId)

@@ -90,15 +90,28 @@
 
         [HttpGet]
         [Route("[action]")]
-        public async Task<IActionResult> GetAllFilesByUserId(Guid userId)
+        public async Task<IActionResult> ShowAllFilesByUserId(Guid userId)
         {
             if (!await this.ClaimsAreEqualToInput(userId))
             {
                 return this.BadRequest("Credentials are invalid");
             }
 
-            List<SavedFileModel> fileDbModels = await this.userService.GetAllFilesByUserId(userId);
+            List<SavedFileModel> fileDbModels = await this.userService.ShowAllFilesByUserId(userId);
             return this.Ok(new JsonResult(fileDbModels));
+        }
+
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> ShowFilesThatUserShares(Guid userId)
+        {
+            if (!await this.ClaimsAreEqualToInput(userId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            List<SharedFileModel> sharedFiles = await this.userService.ShowFilesThatUserShares(userId);
+            return this.Ok(new JsonResult(sharedFiles));
         }
 
         [HttpDelete]

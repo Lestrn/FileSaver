@@ -34,7 +34,7 @@
             User? dbUser = (await this.userRepository.Where((Func<User, bool>)(databaseUser => databaseUser.Email == user.Email && BCrypt.Net.BCrypt.EnhancedVerify(user.Password, databaseUser.Password)))).FirstOrDefault();
             if (dbUser is null)
             {
-                return JObject.FromObject(new { status = "Bad request", code = 404, message = "User was not found" });
+                return JObject.FromObject(new { status = "Bad request", code = 404, message = "Invalid email or password" });
             }
 
             return await this.GenerateToken(dbUser);
