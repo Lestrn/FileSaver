@@ -22,18 +22,6 @@
             this.userService = userService;
         }
 
-        [HttpPost]
-        [Route("[action]")]
-        public async Task<IActionResult> UploadFile(Guid userId, IFormFile file)
-        {
-            if (!await this.ClaimsAreEqualToInput(userId))
-            {
-                return this.BadRequest("Credentials are invalid");
-            }
-
-            return await this.userService.UploadFile(userId, file) ? this.Ok() : this.BadRequest();
-        }
-
         [HttpGet]
         [Route("[action]")]
         public async Task<IActionResult> DownloadFile(Guid fileId, Guid ownerId)
@@ -57,26 +45,6 @@
             }
 
             return this.NotFound();
-        }
-
-        [HttpPut]
-        [Route("[action]")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateRole(Guid userId, string role)
-        {
-            bool roleIsParsed = Enum.TryParse(typeof(UserRoles), role, out object? roleEnum);
-            if (!roleIsParsed)
-            {
-                return this.BadRequest("incorrect role input");
-            }
-
-            bool isUpdated = await this.userService.UpdateRole(userId, (UserRoles)roleEnum);
-            if (!isUpdated)
-            {
-                return this.BadRequest("User with such id wasnt found");
-            }
-
-            return this.Ok();
         }
 
         [HttpGet]
@@ -114,16 +82,134 @@
             return this.Ok(new JsonResult(sharedFiles));
         }
 
-        [HttpDelete]
+        [HttpGet]
         [Route("[action]")]
-        public async Task<IActionResult> DeleteFileById(Guid fileId, Guid ownerId)
+        public async Task<IActionResult> ShowPendingFriendRequests(Guid userId)
         {
-            if (!await this.ClaimsAreEqualToInput(ownerId))
+            if (!await this.ClaimsAreEqualToInput(userId))
             {
                 return this.BadRequest("Credentials are invalid");
             }
 
-            return await this.userService.DeleteFile(fileId) ? this.Ok() : this.NotFound();
+            return this.Ok(new JsonResult(await this.userService.ShowAllPendingFriendRequests(userId)));
+        }
+
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> ShowAcceptedFriendRequests(Guid userId)
+        {
+            if (!await this.ClaimsAreEqualToInput(userId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            return this.Ok(new JsonResult(await this.userService.ShowAllAcceptedFriendRequests(userId)));
+        }
+
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> ShowDeclinedFriendRequests(Guid userId)
+        {
+            if (!await this.ClaimsAreEqualToInput(userId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            return this.Ok(new JsonResult(await this.userService.ShowAllDeclinedFriendRequests(userId)));
+        }
+
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> ShowReceivedMessages(Guid userId)
+        {
+            if (!await this.ClaimsAreEqualToInput(userId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            List<MessageModel>? messages = await this.userService.ShowReceivedMessages(userId);
+            return this.Ok(new JsonResult(messages));
+        }
+
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> ShowSentMessages(Guid userId)
+        {
+            if (!await this.ClaimsAreEqualToInput(userId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            List<MessageModel>? messages = await this.userService.ShowSentMessages(userId);
+            return this.Ok(new JsonResult(messages));
+        }
+
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> UploadFile(Guid userId, IFormFile file)
+        {
+            if (!await this.ClaimsAreEqualToInput(userId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            return await this.userService.UploadFile(userId, file) ? this.Ok() : this.BadRequest();
+        }
+
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> ShareFile(UserFileShareDTO share)
+        {
+            if (!await this.ClaimsAreEqualToInput(share.OwnerId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            var res = await this.userService.ShareFile(share);
+            if (!res.isShared)
+            {
+                return this.BadRequest(res.errorMsg);
+            }
+
+            return this.Ok();
+        }
+
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> SendMessage(Guid senderId, Guid receiverId, string content)
+        {
+            if (!await this.ClaimsAreEqualToInput(senderId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            var res = await this.userService.SendMessage(senderId, receiverId, content);
+            if (!res.isSent)
+            {
+                return this.BadRequest(res.errorMsg);
+            }
+
+            return this.Ok();
+        }
+
+        [HttpPut]
+        [Route("[action]")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateRole(Guid userId, string role)
+        {
+            bool roleIsParsed = Enum.TryParse(typeof(UserRoles), role, out object? roleEnum);
+            if (!roleIsParsed)
+            {
+                return this.BadRequest("incorrect role input");
+            }
+
+            bool isUpdated = await this.userService.UpdateRole(userId, (UserRoles)roleEnum);
+            if (!isUpdated)
+            {
+                return this.BadRequest("User with such id wasnt found");
+            }
+
+            return this.Ok();
         }
 
         [HttpPut]
@@ -157,42 +243,6 @@
             if (!res.isChanged)
             {
                 return this.BadRequest(res.message);
-            }
-
-            return this.Ok();
-        }
-
-        [HttpPost]
-        [Route("[action]")]
-        public async Task<IActionResult> ShareFile(UserFileShareDTO share)
-        {
-            if (!await this.ClaimsAreEqualToInput(share.OwnerId))
-            {
-                return this.BadRequest("Credentials are invalid");
-            }
-
-            var res = await this.userService.ShareFile(share);
-            if (!res.isShared)
-            {
-                return this.BadRequest(res.errorMsg);
-            }
-
-            return this.Ok();
-        }
-
-        [HttpDelete]
-        [Route("[action]")]
-        public async Task<IActionResult> StopSharingFile(UserFileShareDTO share)
-        {
-            if (!await this.ClaimsAreEqualToInput(share.OwnerId))
-            {
-                return this.BadRequest("Credentials are invalid");
-            }
-
-            var res = await this.userService.StopSharing(share);
-            if (!res.isStopped)
-            {
-                return this.BadRequest(res.errorMsg);
             }
 
             return this.Ok();
@@ -252,40 +302,34 @@
             return this.Ok();
         }
 
-        [HttpGet]
+        [HttpDelete]
         [Route("[action]")]
-        public async Task<IActionResult> ShowPendingFriendRequests(Guid userId)
+        public async Task<IActionResult> StopSharingFile(UserFileShareDTO share)
         {
-            if (!await this.ClaimsAreEqualToInput(userId))
+            if (!await this.ClaimsAreEqualToInput(share.OwnerId))
             {
                 return this.BadRequest("Credentials are invalid");
             }
 
-            return this.Ok(new JsonResult(await this.userService.ShowAllPendingFriendRequests(userId)));
+            var res = await this.userService.StopSharing(share);
+            if (!res.isStopped)
+            {
+                return this.BadRequest(res.errorMsg);
+            }
+
+            return this.Ok();
         }
 
-        [HttpGet]
+        [HttpDelete]
         [Route("[action]")]
-        public async Task<IActionResult> ShowAcceptedFriendRequests(Guid userId)
+        public async Task<IActionResult> DeleteFileById(Guid fileId, Guid ownerId)
         {
-            if (!await this.ClaimsAreEqualToInput(userId))
+            if (!await this.ClaimsAreEqualToInput(ownerId))
             {
                 return this.BadRequest("Credentials are invalid");
             }
 
-            return this.Ok(new JsonResult(await this.userService.ShowAllAcceptedFriendRequests(userId)));
-        }
-
-        [HttpGet]
-        [Route("[action]")]
-        public async Task<IActionResult> ShowDeclinedFriendRequests(Guid userId)
-        {
-            if (!await this.ClaimsAreEqualToInput(userId))
-            {
-                return this.BadRequest("Credentials are invalid");
-            }
-
-            return this.Ok(new JsonResult(await this.userService.ShowAllDeclinedFriendRequests(userId)));
+            return await this.userService.DeleteFile(fileId) ? this.Ok() : this.NotFound();
         }
 
         [HttpDelete]
@@ -301,50 +345,6 @@
             if (!isDeleted)
             {
                 return this.BadRequest("Friendship was not found");
-            }
-
-            return this.Ok();
-        }
-
-        [HttpGet]
-        [Route("[action]")]
-        public async Task<IActionResult> ShowReceivedMessages(Guid userId)
-        {
-            if (!await this.ClaimsAreEqualToInput(userId))
-            {
-                return this.BadRequest("Credentials are invalid");
-            }
-
-            List<MessageModel>? messages = await this.userService.ShowReceivedMessages(userId);
-            return this.Ok(new JsonResult(messages));
-        }
-
-        [HttpGet]
-        [Route("[action]")]
-        public async Task<IActionResult> ShowSentMessages(Guid userId)
-        {
-            if (!await this.ClaimsAreEqualToInput(userId))
-            {
-                return this.BadRequest("Credentials are invalid");
-            }
-
-            List<MessageModel>? messages = await this.userService.ShowSentMessages(userId);
-            return this.Ok(new JsonResult(messages));
-        }
-
-        [HttpPost]
-        [Route("[action]")]
-        public async Task<IActionResult> SendMessage(Guid senderId, Guid receiverId, string content)
-        {
-            if (!await this.ClaimsAreEqualToInput(senderId))
-            {
-                return this.BadRequest("Credentials are invalid");
-            }
-
-            var res = await this.userService.SendMessage(senderId, receiverId, content);
-            if (!res.isSent)
-            {
-                return this.BadRequest(res.errorMsg);
             }
 
             return this.Ok();
