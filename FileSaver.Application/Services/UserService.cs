@@ -50,12 +50,17 @@
             return true;
         }
 
-        public async Task<List<UserModelEmailRole>> GetAllUsers()
+        public async Task<List<UserModel>> GetAllUsers()
         {
             List<User> users = await this.userRepository.GetAllAsync();
-            List<UserModelEmailRole> userModel = new List<UserModelEmailRole>(users.Count);
-            users.ForEach(user => userModel.Add(this.mapper.Map<UserModelEmailRole>(user)));
+            List<UserModel> userModel = new List<UserModel>(users.Count);
+            users.ForEach(user => userModel.Add(this.mapper.Map<UserModel>(user)));
             return userModel;
+        }
+
+        public async Task<UserModel?> GetUserInfo(Guid userId)
+        {
+            return this.mapper.Map<UserModel>(await this.userRepository.FindByIdAsync(userId));
         }
 
         public async Task<SavedFile?> GetFileById(Guid fileId)
@@ -63,7 +68,7 @@
             return await this.fileRepository.FindByIdAsync(fileId);
         }
 
-        public async Task<List<SavedFileModel>> ShowAllFilesByUserId(Guid userId)
+        public async Task<List<SavedFileModel>> GetAllFilesByUserId(Guid userId)
         {
             User? userDb = await this.userRepository.FindByIdWithIncludesAsync(userId, UserProperties.Files.ToString());
             if (userDb == null || userDb.Files == null)
@@ -94,7 +99,7 @@
             return userFiles;
         }
 
-        public async Task<List<SharedFileModel>> ShowFilesThatUserShares(Guid userId)
+        public async Task<List<SharedFileModel>> GetFilesThatUserShares(Guid userId)
         {
             List<SharedFile> sharedFiles = (await this.sharedFileRepository.Where(sf => sf.SharedByUserId == userId)).ToList();
             List<SharedFileModel> sharedFileModels = new List<SharedFileModel>(sharedFiles.Count);
@@ -266,17 +271,17 @@
             return (res.completed, res.errorMsg);
         }
 
-        public async Task<List<FriendshipModel>> ShowAllPendingFriendRequests(Guid userId) // Only receiver of friend request sees
+        public async Task<List<FriendshipModel>> GetAllPendingFriendRequests(Guid userId) // Only receiver of friend request sees
         {
             return await this.ShowFriends(userId, FriendshipStatus.Pending);
         }
 
-        public async Task<List<FriendshipModel>> ShowAllDeclinedFriendRequests(Guid userId) // Only receiver of friend request sees
+        public async Task<List<FriendshipModel>> GetAllDeclinedFriendRequests(Guid userId) // Only receiver of friend request sees
         {
             return await this.ShowFriends(userId, FriendshipStatus.Declined);
         }
 
-        public async Task<List<FriendModel>?> ShowAllAcceptedFriendRequests(Guid userId) // Receiver and Sender both see
+        public async Task<List<FriendModel>?> GetAllAcceptedFriendRequests(Guid userId) // Receiver and Sender both see
         {
             List<Friendship> friendshipsUserIsSender = (await this.friendshipRepository.Where(fs => (fs.SenderUserID == userId) && fs.Status == FriendshipStatus.Accepted)).ToList();
             List<Friendship> friendshipsUserisReceiver = (await this.friendshipRepository.Where(fs => (fs.ReceiverUserID == userId) && fs.Status == FriendshipStatus.Accepted)).ToList();
@@ -305,7 +310,7 @@
             return true;
         }
 
-        public async Task<List<MessageModel>?> ShowReceivedMessages(Guid userid)
+        public async Task<List<MessageModel>?> GetReceivedMessages(Guid userid)
         {
             User? receiver = await this.userRepository.FindByIdWithIncludesAsync(userid, UserProperties.ReceivedMessages.ToString());
             if (receiver == null)
@@ -319,7 +324,7 @@
             return messagesModel;
         }
 
-        public async Task<List<MessageModel>?> ShowSentMessages(Guid userid)
+        public async Task<List<MessageModel>?> GetSentMessages(Guid userid)
         {
             User? sender = await this.userRepository.FindByIdWithIncludesAsync(userid, UserProperties.SentMessages.ToString());
             if (sender == null)

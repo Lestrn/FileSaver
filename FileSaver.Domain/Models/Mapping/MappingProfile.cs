@@ -8,7 +8,7 @@
         public MappingProfile()
         {
             this.CreateMap<SavedFile, SavedFileModel>();
-            this.CreateMap<User, UserModelEmailRole>();
+            this.CreateMap<User, UserModel>();
             this.CreateMap<Friendship, FriendshipModel>();
             this.CreateMap<Message, MessageModel>();
             this.CreateMap<SharedFile, SharedFileModel>();

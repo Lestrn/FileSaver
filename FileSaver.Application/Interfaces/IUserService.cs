@@ -10,15 +10,17 @@
     {
         public Task<bool> UpdateRole(Guid userId, UserRoles role);
 
-        public Task<List<UserModelEmailRole>> GetAllUsers();
+        public Task<List<UserModel>> GetAllUsers();
+
+        public Task<UserModel?> GetUserInfo(Guid userId);
 
         public Task<bool> UploadFile(Guid userId, IFormFile file);
 
         public Task<SavedFile?> GetFileById(Guid fileId);
 
-        public Task<List<SavedFileModel>> ShowAllFilesByUserId(Guid userId);
+        public Task<List<SavedFileModel>> GetAllFilesByUserId(Guid userId);
 
-        public Task<List<SharedFileModel>> ShowFilesThatUserShares(Guid userId);
+        public Task<List<SharedFileModel>> GetFilesThatUserShares(Guid userId);
 
         public Task<bool> DeleteFile(Guid fileId);
 
@@ -36,17 +38,17 @@
 
         public Task<(bool declined, string errorMsg)> DenyFriendRequest(Guid senderId, Guid receiverId);
 
-        public Task<List<FriendshipModel>> ShowAllPendingFriendRequests(Guid userId);
+        public Task<List<FriendshipModel>> GetAllPendingFriendRequests(Guid userId);
 
-        public Task<List<FriendModel>?> ShowAllAcceptedFriendRequests(Guid userId);
+        public Task<List<FriendModel>?> GetAllAcceptedFriendRequests(Guid userId);
 
-        public Task<List<FriendshipModel>> ShowAllDeclinedFriendRequests(Guid userId);
+        public Task<List<FriendshipModel>> GetAllDeclinedFriendRequests(Guid userId);
 
         public Task<bool> DeleteFriendship(Guid senderId, Guid receiverId);
 
-        public Task<List<MessageModel>?> ShowReceivedMessages(Guid userid);
+        public Task<List<MessageModel>?> GetReceivedMessages(Guid userid);
 
-        public Task<List<MessageModel>?> ShowSentMessages(Guid userid);
+        public Task<List<MessageModel>?> GetSentMessages(Guid userid);
 
         public Task<(bool isSent, string errorMsg)> SendMessage(Guid senderId, Guid receiverId, string content);
 
