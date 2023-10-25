@@ -29,58 +29,78 @@
             this.pendingUserRepository = unconfirmedUserRepository;
         }
 
-        public async Task<JObject> LogIn(UserLoginDTO user)
+        public async Task<(JObject, bool isSuccessful)> LogIn(UserLoginDTO user)
         {
             User? dbUser = (await this.userRepository.Where((Func<User, bool>)(databaseUser => databaseUser.Email == user.Email && BCrypt.Net.BCrypt.EnhancedVerify(user.Password, databaseUser.Password)))).FirstOrDefault();
             if (dbUser is null)
             {
-                return JObject.FromObject(new { status = "Bad request", code = 404, message = "Invalid email or password" });
+                return (JObject.FromObject(new { status = "Bad request", code = 404, message = "Invalid email or password" }), false);
             }
 
-            return await this.GenerateToken(dbUser);
+            return (await this.GenerateToken(dbUser), true);
         }
 
-        public async Task<JObject> RecoveryLogIn(string email, string userCode)
+        public async Task<(JObject, bool isSuccessful)> RecoveryLogIn(string email, string userCode)
         {
             if (!await this.ConfirmCode(email, userCode, false))
             {
-                return JObject.FromObject(new { status = "Bad request", message = "Confirmation failed" });
+                return (JObject.FromObject(new { status = "Bad request", message = "Confirmation failed" }), false);
             }
 
             User? dbUser = (await this.userRepository.Where(dbUser => dbUser.Email == email)).FirstOrDefault();
             if (dbUser == null)
             {
-                return JObject.FromObject(new { status = "Bad request", code = 404, message = $"User with {email} email was not found" });
+                return (JObject.FromObject(new { status = "Bad request", code = 404, message = $"User with {email} email was not found" }), false);
             }
 
-            return await this.GenerateToken(dbUser);
+            return (await this.GenerateToken(dbUser), true);
         }
 
-        public async Task<JObject> Register(UserDTO user)
+        public async Task<(JObject, bool isSuccessful)> Register(UserDTO user)
         {
             EmailValidator validator = new EmailValidator();
             var validationResult = validator.Validate(user.Email);
             if (!validationResult.IsValid)
             {
-                return JObject.FromObject(new { status = "Bad request", code = 404, message = "Email validation failed" });
+                return (JObject.FromObject(new
+                {
+                    status = "Bad request",
+                    code = 404,
+                    message = "Email validation failed",
+                }), false);
             }
 
             bool emailAlreadyExists = await this.userRepository.Any(dbUser => dbUser.Email == user.Email);
             if (emailAlreadyExists)
             {
-                return JObject.FromObject(new { status = "Bad request", code = 404, message = "Email already exists" });
+                return (JObject.FromObject(new
+                {
+                    status = "Bad request",
+                    code = 404,
+                    message = "Email already exists",
+                }), false);
             }
 
             bool userNameAlreadyExists = await this.userRepository.Any(dbUser => dbUser.Username == user.Username);
             if (userNameAlreadyExists)
             {
-                return JObject.FromObject(new { status = "Bad request", code = 404, message = "Username already exists" });
+                return (JObject.FromObject(new
+                {
+                    status = "Bad request",
+                    code = 404,
+                    message = "Username already exists",
+                }), false);
             }
 
             bool passwordIsValid = Regex.IsMatch(user.Password, "(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}");
             if (!passwordIsValid)
             {
-                return JObject.FromObject(new { status = "Bad request 404", message = ResourceMsgs.InvalidPasswordMsg });
+                return (JObject.FromObject(new
+                {
+                    status = "Bad request 404",
+                    message = ResourceMsgs.InvalidPasswordMsg,
+                }),
+                false);
             }
 
             string subject = "Confirmation Code FileSaver";
@@ -89,7 +109,13 @@
             bool isSent = await this.SendEmailCode(user.Email, subject, htmlBody);
             if (!isSent)
             {
-                return JObject.FromObject(new { status = "Bad request", code = 404, message = "Invalid Email" });
+                return (JObject.FromObject(new
+                {
+                    status = "Bad request",
+                    code = 404,
+                    message = "Invalid Email",
+                }),
+                false);
             }
 
             string passwordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(user.Password, 13);
@@ -109,10 +135,9 @@
                 var responseNewUser = new
                 {
                     status = "Ok", code = 200,
-                    Id = unconfirmedUserDb.Id,
                     Email = unconfirmedUserDb.Email,
                 };
-                return JObject.FromObject(responseNewUser);
+                return (JObject.FromObject(responseNewUser), true);
             }
 
             unconfirmedUserDb.CorrectCode = codeHash;
@@ -123,7 +148,7 @@
                 status = "Ok", code = 200,
                 Email = unconfirmedUserDb.Email,
             };
-            return JObject.FromObject(responseUserExists);
+            return (JObject.FromObject(responseUserExists), true);
         }
 
         public async Task<bool> ConfirmCode(string email, string userCode, bool addToDatabase = true)
@@ -155,12 +180,18 @@
             return true;
         }
 
-        public async Task<JObject> RecoverAccount(string email)
+        public async Task<(JObject, bool isSuccessful)> RecoverAccount(string email)
         {
             User? userDbModel = (await this.userRepository.Where(user => user.Email == email)).FirstOrDefault();
             if (userDbModel == null)
             {
-                return JObject.FromObject(new { status = "Bad request", code = 404, message = "User with this email wasnt found" });
+                return (JObject.FromObject(new
+                {
+                    status = "Bad request",
+                    code = 404,
+                    message = "User with this email wasnt found",
+                }),
+                false);
             }
 
             string code = await this.GenerateCode();
@@ -169,7 +200,13 @@
             var sendingResult = await this.SendEmailCode(email, subject, htmlBody);
             if (!sendingResult)
             {
-                return JObject.FromObject(new { status = "Bad request", code = 404, message = "Invalid Email" });
+                return (JObject.FromObject(new
+                {
+                    status = "Bad request",
+                    code = 404,
+                    message = "Invalid Email",
+                }),
+                false);
             }
 
             string codeHash = BCrypt.Net.BCrypt.EnhancedHashPassword(code, 13);
@@ -191,7 +228,7 @@
                     code = 200,
                     userEmail = unconfirmedUserDbModel.Email,
                 };
-                return JObject.FromObject(responseAdded);
+                return (JObject.FromObject(responseAdded), true);
             }
 
             unconfirmedUserDbModel.CorrectCode = codeHash;
@@ -203,7 +240,7 @@
                 code = 200,
                 userEmail = unconfirmedUserDbModel.Email,
             };
-            return JObject.FromObject(responseUpdated);
+            return (JObject.FromObject(responseUpdated), true);
         }
 
         private Task<bool> SendEmailCode(string email, string subject, string htmlBody)

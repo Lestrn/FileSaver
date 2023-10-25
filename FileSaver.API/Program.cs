@@ -84,7 +84,12 @@ namespace FileSaver.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseCors(x => x
+                   .AllowAnyMethod()
+                   .AllowAnyHeader()
+                   .SetIsOriginAllowed(origin => true) // allow any origin
+                                                       //.WithOrigins("https://localhost:44351")); // Allow only this origin can also have multiple origins separated with comma
+                   .AllowCredentials()); // allow credentials
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();

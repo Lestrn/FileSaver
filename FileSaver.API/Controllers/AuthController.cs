@@ -1,7 +1,9 @@
 ﻿namespace FileSaver.API.Controllers
 {
     using FileSaver.Domain.DTOs;
+    using FileSaver.Domain.Models;
     using FileSaver.Infrastructure.Authentication.Interfaces;
+    using Microsoft.AspNetCore.Cors;
     using Microsoft.AspNetCore.Mvc;
     using Newtonsoft.Json.Linq;
 
@@ -20,16 +22,26 @@
         [Route("[action]")]
         public async Task<IActionResult> LogIn(UserLoginDTO user)
         {
-            JObject res = await this.authService.LogIn(user);
-            return this.Ok(res.ToString());
+            var res = await this.authService.LogIn(user);
+            if (!res.isSuccessful)
+            {
+                return this.BadRequest(res.Item1.ToString());
+            }
+
+            return this.Ok(res.Item1.ToString());
         }
 
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> Register(UserDTO user)
         {
-            JObject res = await this.authService.Register(user);
-            return this.Ok(res.ToString());
+            var res = await this.authService.Register(user);
+            if (!res.isSuccessful)
+            {
+                return this.BadRequest(res.Item1.ToString());
+            }
+
+            return this.Ok(res.Item1.ToString());
         }
 
         [HttpPost]
@@ -49,16 +61,26 @@
         [Route("[action]")]
         public async Task<IActionResult> RecoverAccount(string email)
         {
-            JObject res = await this.authService.RecoverAccount(email);
-            return this.Ok(res.ToString());
+            var res = await this.authService.RecoverAccount(email);
+            if (!res.isSuccessful)
+            {
+                return this.BadRequest(res.Item1.ToString());
+            }
+
+            return this.Ok(res.Item1.ToString());
         }
 
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> ConfirmRecoveryCode(string email, string userCode)
         {
-            JObject res = await this.authService.RecoveryLogIn(email, userCode);
-            return this.Ok(res.ToString());
+            var res = await this.authService.RecoveryLogIn(email, userCode);
+            if (!res.isSuccessful)
+            {
+                return this.BadRequest(res.Item1.ToString());
+            }
+
+            return this.Ok(res.Item1.ToString());
         }
     }
 }
