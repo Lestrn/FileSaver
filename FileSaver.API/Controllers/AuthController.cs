@@ -46,9 +46,9 @@
 
         [HttpPost]
         [Route("[action]")]
-        public async Task<IActionResult> ConfirmCode(string email, string code)
+        public async Task<IActionResult> ConfirmCode(UserConfirmCodeDTO userConfirmCodeDTO)
         {
-            bool isRegistered = await this.authService.ConfirmCode(email, code);
+            bool isRegistered = await this.authService.ConfirmCode(userConfirmCodeDTO.Email, userConfirmCodeDTO.Code);
             if (!isRegistered)
             {
                 return this.BadRequest();
@@ -59,9 +59,9 @@
 
         [HttpPost]
         [Route("[action]")]
-        public async Task<IActionResult> RecoverAccount(string email)
+        public async Task<IActionResult> RecoverAccount(RecoverUserDTO recoverDTO)
         {
-            var res = await this.authService.RecoverAccount(email);
+            var res = await this.authService.RecoverAccount(recoverDTO.Email);
             if (!res.isSuccessful)
             {
                 return this.BadRequest(res.Item1.ToString());
@@ -72,9 +72,9 @@
 
         [HttpPost]
         [Route("[action]")]
-        public async Task<IActionResult> ConfirmRecoveryCode(string email, string userCode)
+        public async Task<IActionResult> ConfirmRecoveryCode(UserConfirmCodeDTO userConfirmCodeDTO)
         {
-            var res = await this.authService.RecoveryLogIn(email, userCode);
+            var res = await this.authService.RecoveryLogIn(userConfirmCodeDTO.Email, userConfirmCodeDTO.Code);
             if (!res.isSuccessful)
             {
                 return this.BadRequest(res.Item1.ToString());

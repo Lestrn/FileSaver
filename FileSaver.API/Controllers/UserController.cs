@@ -41,7 +41,7 @@
                 };
 
                 this.Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
-                return this.File(file.Content, file.ContentType);
+                return this.File(file.Content, file.ContentType, file.FileName);
             }
 
             return this.NotFound();
@@ -189,14 +189,14 @@
 
         [HttpPost]
         [Route("[action]")]
-        public async Task<IActionResult> SendMessage(Guid senderId, Guid receiverId, string content)
+        public async Task<IActionResult> SendMessage(SendMessageDTO sendMessageDTO)
         {
-            if (!await this.ClaimsAreEqualToInput(senderId))
+            if (!await this.ClaimsAreEqualToInput(sendMessageDTO.SenderId))
             {
                 return this.BadRequest("Credentials are invalid");
             }
 
-            var res = await this.userService.SendMessage(senderId, receiverId, content);
+            var res = await this.userService.SendMessage(sendMessageDTO.SenderId, sendMessageDTO.ReceiverId, sendMessageDTO.Content);
             if (!res.isSent)
             {
                 return this.BadRequest(res.errorMsg);
