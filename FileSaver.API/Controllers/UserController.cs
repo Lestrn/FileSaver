@@ -322,13 +322,13 @@
 
         [HttpDelete]
         [Route("[action]")]
-        public async Task<IActionResult> StopSharingFile(UserFileShareDTO share)
+        public async Task<IActionResult> StopSharingFile(Guid fileId, Guid ownerId, Guid sharedWithId)
         {
-            if (!await this.ClaimsAreEqualToInput(share.OwnerId))
+            if (!await this.ClaimsAreEqualToInput(ownerId))
             {
                 return this.BadRequest("Credentials are invalid");
             }
-
+            UserFileShareDTO share = new UserFileShareDTO { FileId = fileId, OwnerId = ownerId, SharedWithId = sharedWithId };
             var res = await this.userService.StopSharing(share);
             if (!res.isStopped)
             {
