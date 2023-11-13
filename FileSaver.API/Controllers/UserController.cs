@@ -71,14 +71,27 @@
 
         [HttpGet]
         [Route("[action]")]
-        public async Task<IActionResult> GetAllFilesByUserId(Guid userId)
+        public async Task<IActionResult> GetOwnFiles(Guid userId)
         {
             if (!await this.ClaimsAreEqualToInput(userId))
             {
                 return this.BadRequest("Credentials are invalid");
             }
 
-            List<SavedFileModel> fileDbModels = await this.userService.GetAllFilesByUserId(userId);
+            List<SavedFileModel> fileDbModels = await this.userService.GetOwnFiles(userId);
+            return this.Ok(new JsonResult(fileDbModels));
+        }
+
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> GetReceivedFiles(Guid userId)
+        {
+            if (!await this.ClaimsAreEqualToInput(userId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            List<SavedFileModel> fileDbModels = await this.userService.GetReceivedFiles(userId);
             return this.Ok(new JsonResult(fileDbModels));
         }
 
@@ -155,6 +168,18 @@
 
             List<MessageModel>? messages = await this.userService.GetSentMessages(userId);
             return this.Ok(new JsonResult(messages));
+        }
+
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> GetFileInfo(Guid fileId, Guid userId)
+        {
+            if (!await this.ClaimsAreEqualToInput(userId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            return this.Ok(new JsonResult(await this.userService.GetFileInfo(fileId)));
         }
 
         [HttpPost]
@@ -340,26 +365,26 @@
 
         [HttpDelete]
         [Route("[action]")]
-        public async Task<IActionResult> DeleteFileById(Guid fileId, Guid ownerId)
+        public async Task<IActionResult> DeleteFileById(Guid fileId, Guid userId)
         {
-            if (!await this.ClaimsAreEqualToInput(ownerId))
+            if (!await this.ClaimsAreEqualToInput(userId))
             {
                 return this.BadRequest("Credentials are invalid");
             }
 
-            return await this.userService.DeleteFile(fileId) ? this.Ok() : this.NotFound();
+            return await this.userService.DeleteFile(fileId, userId) ? this.Ok() : this.NotFound();
         }
 
         [HttpDelete]
         [Route("[action]")]
-        public async Task<IActionResult> DeleteFriendship(Guid senderId, Guid receiverId)
+        public async Task<IActionResult> DeleteFriendship(Guid userId, Guid friendId)
         {
-            if (!(await this.ClaimsAreEqualToInput(senderId) ^ await this.ClaimsAreEqualToInput(receiverId)))
+            if (!(await this.ClaimsAreEqualToInput(userId) ^ await this.ClaimsAreEqualToInput(friendId)))
             {
                 return this.BadRequest("Credentials are invalid");
             }
 
-            bool isDeleted = await this.userService.DeleteFriendship(senderId, receiverId);
+            bool isDeleted = await this.userService.DeleteFriendship(userId, friendId);
             if (!isDeleted)
             {
                 return this.BadRequest("Friendship was not found");

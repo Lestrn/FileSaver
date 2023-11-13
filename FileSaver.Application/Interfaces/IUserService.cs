@@ -14,15 +14,19 @@
 
         public Task<UserModel?> GetUserInfo(Guid userId);
 
+        public Task<SavedFileModel?> GetFileInfo(Guid fileId);
+
         public Task<bool> UploadFile(Guid userId, IFormFile file);
 
         public Task<SavedFile?> GetFileById(Guid fileId);
 
-        public Task<List<SavedFileModel>> GetAllFilesByUserId(Guid userId);
+        public Task<List<SavedFileModel>> GetOwnFiles(Guid userId);
+
+        public Task<List<SavedFileModel>> GetReceivedFiles(Guid userId);
 
         public Task<List<SharedFileModel>> GetFilesThatUserShares(Guid userId);
 
-        public Task<bool> DeleteFile(Guid fileId);
+        public Task<bool> DeleteFile(Guid fileId, Guid userId);
 
         public Task<(bool isUploaded, string errorMsg)> UploadAvatar(Guid userId, IFormFile image);
 

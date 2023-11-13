@@ -68,7 +68,7 @@
             return await this.fileRepository.FindByIdAsync(fileId);
         }
 
-        public async Task<List<SavedFileModel>> GetAllFilesByUserId(Guid userId)
+        public async Task<List<SavedFileModel>> GetOwnFiles(Guid userId)
         {
             User? userDb = await this.userRepository.FindByIdWithIncludesAsync(userId, UserProperties.Files.ToString());
             if (userDb == null || userDb.Files == null)
@@ -83,6 +83,11 @@
                 userFiles.Add(this.mapper.Map<SavedFileModel>(file));
             }
 
+            return userFiles;
+        }
+
+        public async Task<List<SavedFileModel>> GetReceivedFiles(Guid userId)
+        {
             List<SharedFile> sharedFiles = (await this.sharedFileRepository.Where(sf => sf.SharedWithUserId == userId)).ToList();
             List<SharedFile?> sharedFilesWithIncludes = new List<SharedFile?>(sharedFiles.Count);
             for (int i = 0; i < sharedFiles.Count; i++)
@@ -91,6 +96,7 @@
             }
 
             List<SavedFile?> receivedFiles = sharedFilesWithIncludes.Select(sf => sf?.File).ToList();
+            List<SavedFileModel> userFiles = new List<SavedFileModel>(receivedFiles.Count);
             foreach (var file in receivedFiles)
             {
                 userFiles.Add(this.mapper.Map<SavedFileModel>(file));
@@ -110,10 +116,26 @@
             return sharedFileModels;
         }
 
-        public async Task<bool> DeleteFile(Guid fileId)
+        public async Task<SavedFileModel?> GetFileInfo(Guid fileId)
         {
             SavedFile? fileDb = await this.fileRepository.FindByIdAsync(fileId);
             if (fileDb == null)
+            {
+                return null;
+            }
+
+            return this.mapper.Map<SavedFileModel?>(fileDb);
+        }
+
+        public async Task<bool> DeleteFile(Guid fileId, Guid userId)
+        {
+            SavedFile? fileDb = await this.fileRepository.FindByIdAsync(fileId);
+            if (fileDb == null)
+            {
+                return false;
+            }
+
+            if (fileDb.UserId != userId) // Only owner of file can delete the  file
             {
                 return false;
             }
@@ -148,6 +170,12 @@
             if (!await this.AreFriends(userShare.OwnerId, userShare.SharedWithId))
             {
                 return (false, "These users are not friends");
+            }
+
+            bool fileHasAlreadyBeenShared = await this.sharedFileRepository.Any(sf => sf.SharedByUserId == userShare.OwnerId && sf.SharedWithUserId == userShare.SharedWithId && sf.FileId == userShare.FileId); // cant share the same file with the same user
+            if (fileHasAlreadyBeenShared)
+            {
+                return (false, "This file has already  been shared with this user");
             }
 
             User? fileOwnerDb = await this.userRepository.FindByIdWithIncludesAsync(userShare.OwnerId, UserProperties.Files.ToString(), UserProperties.SharedFiles.ToString());
@@ -261,8 +289,8 @@
 
         public async Task<(bool accepted, string errorMsg)> AcceptFriendRequest(Guid senderId, Guid receiverId)
         {
-           var res = await this.SetFriendshipStatus(senderId, receiverId, FriendshipStatus.Accepted);
-           return (res.completed, res.errorMsg);
+            var res = await this.SetFriendshipStatus(senderId, receiverId, FriendshipStatus.Accepted);
+            return (res.completed, res.errorMsg);
         }
 
         public async Task<(bool declined, string errorMsg)> DenyFriendRequest(Guid senderId, Guid receiverId)
@@ -288,7 +316,7 @@
             List<FriendModel> friendModel = new List<FriendModel>(friendshipsUserIsSender.Count);
             friendshipsUserIsSender.ForEach(fs =>
             {
-                friendModel.Add(new FriendModel() { FriendId = fs.ReceiverUserID});
+                friendModel.Add(new FriendModel() { FriendId = fs.ReceiverUserID });
             });
             friendshipsUserisReceiver.ForEach(fs =>
             {
@@ -297,9 +325,9 @@
             return friendModel;
         }
 
-        public async Task<bool> DeleteFriendship(Guid senderId, Guid receiverId)
+        public async Task<bool> DeleteFriendship(Guid userId, Guid friendId)
         {
-            Friendship? friendship = (await this.friendshipRepository.Where(fs => fs.SenderUserID == senderId && fs.ReceiverUserID == receiverId)).FirstOrDefault();
+            Friendship? friendship = (await this.friendshipRepository.Where(fs => (fs.SenderUserID == userId && fs.ReceiverUserID == friendId) || (fs.SenderUserID == friendId && fs.ReceiverUserID == userId))).FirstOrDefault();
             if (friendship == null)
             {
                 return false;

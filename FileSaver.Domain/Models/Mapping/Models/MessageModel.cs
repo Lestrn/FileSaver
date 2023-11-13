@@ -9,5 +9,7 @@
         public DateTime Timestamp { get; set; }
 
         public Guid SenderUserID { get; set; }
+
+        public Guid ReceiverUserID { get; set; }
     }
 }
