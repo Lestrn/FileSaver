@@ -49,6 +49,31 @@
 
         [HttpGet]
         [Route("[action]")]
+        public async Task<IActionResult?> GetAvatarImage(Guid userId)
+        {
+            if (!await this.ClaimsAreEqualToInput(userId))
+            {
+                return this.BadRequest("Credentials are invalid");
+            }
+
+            byte[]? image = await this.userService.GetAvatarBytes(userId);
+            if (image == null)
+            {
+                return null;
+            }
+
+            var contentDisposition = new System.Net.Mime.ContentDisposition
+            {
+                FileName = "Avatar",
+                Inline = false,
+            };
+
+            this.Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
+            return this.File(image, "image/png", "avatar");
+        }
+
+        [HttpGet]
+        [Route("[action]")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllUsers()
         {

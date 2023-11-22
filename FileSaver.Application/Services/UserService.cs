@@ -68,6 +68,17 @@
             return await this.fileRepository.FindByIdAsync(fileId);
         }
 
+        public async Task<byte[]?> GetAvatarBytes(Guid userId)
+        {
+            User? user = await this.userRepository.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return null;
+            }
+
+            return user.Image;
+        }
+
         public async Task<List<SavedFileModel>> GetOwnFiles(Guid userId)
         {
             User? userDb = await this.userRepository.FindByIdWithIncludesAsync(userId, UserProperties.Files.ToString());
@@ -239,7 +250,7 @@
         {
             if (!this.IsImage(image.ContentType))
             {
-                return (false, "Only image files are allowed.");
+                return (false, "Only image png files are allowed.");
             }
 
             User? dbUser = await this.userRepository.FindByIdAsync(userId);
@@ -433,7 +444,7 @@
 
         private bool IsImage(string contentType)
         {
-            string[] allowedContentTypes = { "image/jpeg", "image/png", "image/bmp" };
+            string[] allowedContentTypes = { "image/png" };
             return allowedContentTypes.Contains(contentType);
         }
 

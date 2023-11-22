@@ -20,6 +20,8 @@
 
         public Task<SavedFile?> GetFileById(Guid fileId);
 
+        public Task<byte[]?> GetAvatarBytes(Guid userId);
+
         public Task<List<SavedFileModel>> GetOwnFiles(Guid userId);
 
         public Task<List<SavedFileModel>> GetReceivedFiles(Guid userId);
