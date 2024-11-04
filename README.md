@@ -1,9 +1,33 @@
 # FileSaver
-English:
-Project Theme: File Storage, File Sharing Platform.
-Features: Account registration, email confirmation, adding other users as friends, implementing a simple messenger for communication between "friends," and granting access to personal files to friends.
-Implementation: Planning to build the back-end with ASP.NET Web API and the front-end with React.
-Ukrainian:
-Тема проекту: Зберігання файлів, файлообмінник.
-Фічі: Реєстрація аккаунту, підтвердження імєйлу, додавати до друзів інших юзерів, зробити якийсь простий мессенджер між "друзями", давати  доступ до своїх файлів своїм друзям.
-Реалізація: Планую написати back-end на asp web api, а фронт на реакті.
+
+## Project Overview
+**FileSaver** is a web-based file storage and sharing platform that allows users to securely store files, connect with friends, and share files with ease. With integrated messaging capabilities, FileSaver enables seamless communication and efficient file management within users' networks.
+
+---
+
+## Features
+
+- **Account Registration**  
+  Create a personal account to get started on the platform.
+
+- **Email Confirmation**  
+  Verify your email for enhanced security and account protection.
+
+- **Friend Connections**  
+  Add other users as friends to easily share files and communicate.
+
+- **Messaging**  
+  Simple built-in messenger for easy communication between friends on the platform.
+
+- **File Sharing**  
+  Grant file access to friends, allowing them to view or download shared files.
+
+---
+
+## Tech Stack
+
+- **Back-end**: ASP.NET Web API
+- **Front-end**: React
+
+---
+
